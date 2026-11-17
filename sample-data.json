@@ -1,6 +1,11 @@
 {
   "ok": true,
-  "issue": { "title": "December 2026 (sample)", "slug": "2026-12", "date": "2026-12-01" },
+  "issue": {
+    "title": "December 2026 (sample)",
+    "slug": "2026-12",
+    "date": "2026-12-01",
+    "weekSummary": "This week is packed with ways to connect, learn and take action. Testify for clean heat standards at City Hall, help paint banners for January's march, and celebrate ten years of the Civic Action Team.\n\nNew to 350? Come to Climate Community Night for a potluck and orientation. Everyone is welcome."
+  },
   "items": [
     {
       "id": "row-12",

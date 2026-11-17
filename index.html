@@ -65,7 +65,16 @@
       <p class="nb-lede">Choose which items to include, put them in order, and pick one to feature. The preview updates as you go. To change the wording, edit the Google Sheet and load again.</p>
 
       <div class="nb-arrange">
-        <div class="nb-arrange-list" id="arrange-list"></div>
+        <div class="nb-arrange-col">
+          <section class="nb-card nb-recap" aria-labelledby="recap-title">
+            <h2 class="nb-h2" id="recap-title">This week in summary</h2>
+            <p class="nb-help" id="recap-help">A short, friendly overview of everything happening this week, in a few sentences. It appears as "In summary…" under the board and at the top of the email. Plain text only; leave a blank line between paragraphs.</p>
+            <label class="nb-label" for="week-summary">Summary</label>
+            <textarea class="nb-input nb-recap-input" id="week-summary" rows="6" aria-describedby="recap-help recap-count"></textarea>
+            <p class="nb-help nb-recap-count" id="recap-count"></p>
+          </section>
+          <div class="nb-arrange-list" id="arrange-list"></div>
+        </div>
         <div class="nb-arrange-preview">
           <h2 class="nb-h2" id="live-preview-title">Live preview</h2>
           <div class="nb-preview" id="preview-arrange" role="region" aria-labelledby="live-preview-title"></div>

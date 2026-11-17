@@ -33,6 +33,8 @@
       excluded: {},        // { key: true } for left-out items
       featured: null,      // key of the featured item
       sourceWarnings: [],  // warnings from sanitizing (emails removed, etc.)
+      weekSummary: '',     // "This week in summary", written by the volunteer
+      weekSummaryEdited: false,
       step: 1,
       maxStep: 1,
       publishedUrl: null
@@ -63,6 +65,11 @@
 
   function hasData() {
     return !!state.issue && state.items.length > 0;
+  }
+
+  // The issue as it will be published, including the volunteer's summary.
+  function currentIssue() {
+    return Object.assign({}, state.issue, { weekSummary: state.weekSummary });
   }
 
   function localFontBase() {
@@ -152,6 +159,8 @@
       merged.step = Math.min(Math.max(parseInt(s.step, 10) || 1, 1), 4);
       merged.maxStep = Math.min(Math.max(parseInt(s.maxStep, 10) || 1, merged.step), 4);
       merged.publishedUrl = s.publishedUrl && N350.isHttpUrl(s.publishedUrl) ? s.publishedUrl : null;
+      merged.weekSummary = typeof s.weekSummary === 'string' ? N350.sanitizeIssue({ weekSummary: s.weekSummary }).issue.weekSummary : '';
+      merged.weekSummaryEdited = !!s.weekSummaryEdited;
       return merged;
     } catch (e) {
       return null;
@@ -214,6 +223,8 @@
     next.issue = cleanIssue.issue;
     next.items = cleanItems.items;
     next.sourceWarnings = cleanIssue.warnings.concat(cleanItems.warnings);
+    // The Sheet may send a draft summary; the volunteer can rewrite it.
+    next.weekSummary = cleanIssue.issue.weekSummary;
 
     // Group by category in the order they first appear.
     var byName = {};
@@ -264,6 +275,10 @@
     var fid = prev.featured != null ? idOf(prev, prev.featured) : null;
     if (fid != null && keyById[fid] != null) next.featured = keyById[fid];
     next.publishedUrl = prev.publishedUrl;
+    if (prev.weekSummaryEdited) {
+      next.weekSummary = prev.weekSummary;
+      next.weekSummaryEdited = true;
+    }
   }
 
   function loadFromSheet(event) {
@@ -343,7 +358,7 @@
   }
 
   function renderBoard(forPublishing) {
-    return N350.render(state.issue, includedItems(), {
+    return N350.render(currentIssue(), includedItems(), {
       css: boardCss,
       fontBaseUrl: forPublishing ? publishFontBase() : localFontBase(),
       assetBaseUrl: window.location.href,
@@ -352,7 +367,7 @@
   }
 
   function itemIssues() {
-    var check = N350.validate(state.issue, includedItems());
+    var check = N350.validate(currentIssue(), includedItems());
     var byId = {};
     function add(list, kind) {
       list.forEach(function (p) {
@@ -514,6 +529,48 @@
   }
 
   // ------------------------------------------------------------------
+  // "This week in summary" (written by the volunteer)
+  // ------------------------------------------------------------------
+  var recapTimer = null;
+
+  function fillRecap() {
+    var ta = $('#week-summary');
+    if (document.activeElement !== ta) ta.value = state.weekSummary;
+    updateRecapCount();
+  }
+
+  function updateRecapCount() {
+    var words = N350.wordCount(state.weekSummary);
+    var max = N350.LIMITS.RECAP_MAX_WORDS;
+    var count = $('#recap-count');
+    count.textContent = words + ' word' + (words === 1 ? '' : 's') + '. Aim for ' + max + ' or fewer.' +
+      (words > max ? ' This is a bit long.' : '');
+    count.classList.toggle('is-over', words > max);
+  }
+
+  function onRecapInput() {
+    var clean = N350.sanitizeIssue({ weekSummary: $('#week-summary').value }).issue.weekSummary;
+    state.weekSummary = clean;
+    state.weekSummaryEdited = true;
+    save();
+    updateRecapCount();
+    window.clearTimeout(recapTimer);
+    recapTimer = window.setTimeout(function () {
+      renderPreview('#preview-arrange', false);
+      if (state.maxStep >= 3) renderCheck();
+      if (state.maxStep >= 4) renderShare();
+    }, 250);
+  }
+
+  function onRecapChange() {
+    var ta = $('#week-summary');
+    if (N350.containsEmail(ta.value)) {
+      ta.value = state.weekSummary;
+      showMessage('warning', 'Email addresses can\'t go in the weekly summary, so it was removed. Point readers to an item\'s link instead.');
+    }
+  }
+
+  // ------------------------------------------------------------------
   // Previews (inside a shadow root so the builder's CSS can't leak in)
   // ------------------------------------------------------------------
   function renderPreview(selector, forPublishing) {
@@ -536,7 +593,7 @@
   function renderCheck() {
     if (!hasData()) return;
     var items = includedItems();
-    var check = N350.validate(state.issue, items);
+    var check = N350.validate(currentIssue(), items);
     var warnings = state.sourceWarnings.map(function (w) { return w; }).concat(check.warnings);
 
     var summary = $('#check-summary');
@@ -590,13 +647,13 @@
   // Step 4: publish and share
   // ------------------------------------------------------------------
   function currentEmail() {
-    return N350.buildEmail(state.issue, includedItems(), boardUrl());
+    return N350.buildEmail(currentIssue(), includedItems(), boardUrl());
   }
 
   function renderShare() {
     if (!hasData()) return;
     var items = includedItems();
-    var check = N350.validate(state.issue, items);
+    var check = N350.validate(currentIssue(), items);
     var publishBtn = $('#publish-btn');
     var note = $('#publish-note');
 
@@ -885,7 +942,7 @@
     $all('.nb-step-panel').forEach(function (p) {
       p.hidden = Number(p.getAttribute('data-step')) !== n;
     });
-    if (n === 2) { renderArrangeList(); renderPreview('#preview-arrange', false); }
+    if (n === 2) { fillRecap(); renderArrangeList(); renderPreview('#preview-arrange', false); }
     if (n === 3) renderCheck();
     if (n === 4) renderShare();
     if (n === 1) updateTokenUi();
@@ -915,6 +972,7 @@
     try { sessionStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
     token = '';
     state = emptyState();
+    $('#week-summary').value = '';
     ['#preview-arrange', '#preview-final'].forEach(function (s) {
       var host = $(s);
       if (host.shadowRoot) host.shadowRoot.innerHTML = '';
@@ -954,6 +1012,8 @@
     $('#png-btn').addEventListener('click', makePng);
     $('#email-btn').addEventListener('click', copyEmail);
     $('#html-btn').addEventListener('click', downloadHtml);
+    $('#week-summary').addEventListener('input', onRecapInput);
+    $('#week-summary').addEventListener('change', onRecapChange);
     document.addEventListener('click', onCopyField);
   }
 

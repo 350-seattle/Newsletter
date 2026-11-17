@@ -20,6 +20,7 @@
   var SUMMARY_MAX = 160;
   var BLURB_MAX_WORDS = 150;
   var MIN_ITEMS = 3;
+  var RECAP_MAX_WORDS = 120;
 
   // An email address: something@domain.tld. File names such as
   // photo@2x.png are not treated as addresses.
@@ -151,12 +152,14 @@
     var issue = {
       title: cleanString(raw.title),
       slug: cleanString(raw.slug),
-      date: cleanString(raw.date)
+      date: cleanString(raw.date),
+      weekSummary: cleanString(raw.weekSummary)
     };
+    var names = { title: 'issue title', slug: 'issue slug', date: 'issue date', weekSummary: 'weekly summary' };
     Object.keys(issue).forEach(function (k) {
       if (containsEmail(issue[k])) {
         issue[k] = removeEmails(issue[k]);
-        warnings.push({ id: null, field: k, message: 'An email address was removed from the issue ' + k + '.' });
+        warnings.push({ id: null, field: k, message: 'An email address was removed from the ' + names[k] + '. Email addresses are never shown or published.' });
       }
     });
     if (!issue.slug) issue.slug = slugify(issue.title) || 'newsletter';
@@ -198,6 +201,12 @@
       return item;
     });
     return { items: items, warnings: warnings };
+  }
+
+  // The volunteer's "everything happening this week" text, never with an
+  // email address in it (even if the caller forgot to sanitize).
+  function weekSummaryOf(issue) {
+    return removeEmails(cleanString(issue && issue.weekSummary));
   }
 
   function wordCount(text) {
@@ -245,6 +254,19 @@
         warnings.push({ id: item.id, message: name + ' has an image but no alt text (a short description for people using screen readers).' });
       }
     });
+
+    var recap = weekSummaryOf(issue);
+    if (!recap) {
+      warnings.push({ id: null, field: 'weekSummary', message: 'There is no weekly summary yet. Add a few sentences about everything happening this week in step 2.' });
+    } else {
+      var recapWords = wordCount(recap);
+      if (recapWords > RECAP_MAX_WORDS) {
+        warnings.push({ id: null, field: 'weekSummary', message: 'The weekly summary is ' + recapWords + ' words (aim for ' + RECAP_MAX_WORDS + ' or fewer).' });
+      }
+      if (/https?:\/\/|www\./i.test(recap)) {
+        warnings.push({ id: null, field: 'weekSummary', message: 'The weekly summary contains a web address. It will show as plain text and clicks on it are not tracked; put links in the items instead.' });
+      }
+    }
 
     if (items.length > 0 && items.length < MIN_ITEMS) {
       warnings.push({ id: null, message: 'Only ' + items.length + ' item' + (items.length === 1 ? ' is' : 's are') + ' included. Boards look best with at least ' + MIN_ITEMS + '.' });
@@ -372,6 +394,7 @@
       .trim() + '\n';
     var dateText = formatDate(issue.date) || issue.title || '';
     var label = '350 Seattle Newsletter' + (issue.title ? ', ' + issue.title : '');
+    var recap = weekSummaryOf(issue);
 
     var html =
       '<div class="n350-board" lang="en">' +
@@ -386,6 +409,12 @@
             ordered.map(function (item) { return renderTile(issue, item, opts); }).join('') +
           '</ul>' +
         '</section>' +
+        (recap
+          ? '<section class="n350-recap" aria-label="This week in summary">' +
+              '<h2 class="n350-heading">In summary&hellip;</h2>' +
+              '<div class="n350-recap-text">' + paragraphs(recap) + '</div>' +
+            '</section>'
+          : '') +
       '</div>';
 
     return { html: html, css: css, fragment: '<style>\n' + css + '</style>\n' + html };
@@ -419,6 +448,19 @@
     var links = [];
     var htmlParts = [];
     var textParts = [];
+    var recap = weekSummaryOf(issue);
+    if (recap) {
+      htmlParts.push('<h3 style="font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.3;color:#4254B0;margin:0 0 8px;">In summary&hellip;</h3>');
+      recap.split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean).forEach(function (p) {
+        htmlParts.push('<p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#000000;margin:0 0 16px;">' +
+          escapeHtml(p).replace(/\n/g, '<br>') + '</p>');
+      });
+      textParts.push('IN SUMMARY…');
+      textParts.push('');
+      textParts.push(recap);
+      textParts.push('');
+      textParts.push('');
+    }
     groups.forEach(function (g) {
       htmlParts.push('<h3 style="font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.3;color:#4254B0;margin:24px 0 8px;">' +
         escapeHtml(g.category) + '</h3>');
@@ -474,6 +516,7 @@
     previewImageLink: previewImageLink,
     previewAltText: previewAltText,
     containsEmail: containsEmail,
-    LIMITS: { SUMMARY_MAX: SUMMARY_MAX, BLURB_MAX_WORDS: BLURB_MAX_WORDS, MIN_ITEMS: MIN_ITEMS }
+    wordCount: wordCount,
+    LIMITS: { SUMMARY_MAX: SUMMARY_MAX, BLURB_MAX_WORDS: BLURB_MAX_WORDS, MIN_ITEMS: MIN_ITEMS, RECAP_MAX_WORDS: RECAP_MAX_WORDS }
   };
 });

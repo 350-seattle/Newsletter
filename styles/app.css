@@ -519,6 +519,30 @@ main.nb-wrap {
   }
 }
 
+.nb-arrange-col {
+  min-width: 0;
+}
+
+.nb-recap {
+  margin: 0 0 16px;
+  background: var(--nb-paper);
+}
+
+.nb-recap-input {
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.nb-recap-count {
+  margin: -4px 0 0;
+}
+
+.nb-recap-count.is-over {
+  color: var(--nb-warn-ink);
+  font-weight: 700;
+}
+
 .nb-feature-note {
   margin: 0 0 12px;
 }
