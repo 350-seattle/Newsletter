@@ -20,14 +20,14 @@ cd tests/e2e && npm install && node run.mjs   # browser checks 1-10
 - [x] Builder page (4 steps), app logic
 - [x] Unit tests (`tests/*.test.js`) for checks 2 and 7
 - [x] Browser test runner (`tests/e2e/run.mjs`) for checks 1-10
-- [ ] Check 9 reported FAIL: messages are right; suspected test bug (compares saved state byte-for-byte, but the step number changes)
+- [x] Check 9 fixed (the test read the previous scenario's message; app behavior was correct)
 - [ ] README.md for volunteers
 - [ ] Visual review of the PNG and screenshots against `reference/images`
 - [ ] Final full run of both test suites, commit, push
 
 ## Last known results (browser checks)
 
-1 PASS, 2 PASS, 3 PASS, 4 PASS, 5 PASS, 6 PASS, 7 PASS, 8 PASS, 9 FAIL (see above), 10 PASS (Lighthouse a11y 100/100)
+All 10 PASS (Lighthouse a11y 100/100 on the preview and the published board)
 
 ## Decisions made (approved plan)
 

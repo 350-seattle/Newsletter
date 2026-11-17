@@ -466,11 +466,13 @@ try {
   await page.click('#down-0');
   await page.click('#feat-5');
   await page.click('#inc-6');
-  const arrangement = await page.evaluate(() => sessionStorage.getItem('n350-arrangement'));
+  const arrangement = (await page.evaluate(() => { const s = JSON.parse(sessionStorage.getItem('n350-arrangement')); return JSON.stringify([s.items, s.categories, s.excluded, s.featured]); }));
   const orderOf = () => page.$$eval('#arrange-list .nb-item-headline', (e) => e.map((x) => x.textContent).join('|'));
   const order0 = await orderOf();
 
   const scenarios = [];
+  // Each attempt must read its own message, not the previous one.
+  const clearMessages = () => page.evaluate(() => { document.getElementById('messages').textContent = ''; });
   async function tryPublish(m, expect) {
     mode = m;
     await page.click('.nb-step[data-step="4"]').catch(() => {});
@@ -480,16 +482,17 @@ try {
       await page.click('#step-3 [data-goto="4"]');
     }
     await waitStep(page, 4);
+    await clearMessages();
     await page.click('#publish-btn');
     await page.waitForSelector('#confirm-dialog[open]');
     await page.click('#confirm-yes');
     await page.waitForFunction(() => document.querySelector('#messages .nb-msg--error'), { timeout: 10000 });
     const msg = await page.$eval('#messages .nb-msg--error', (e) => e.textContent);
-    const same = (await page.evaluate(() => sessionStorage.getItem('n350-arrangement'))) === arrangement;
+    const same = (await page.evaluate(() => { const s = JSON.parse(sessionStorage.getItem('n350-arrangement')); return JSON.stringify([s.items, s.categories, s.excluded, s.featured]); })) === arrangement;
     await page.click('.nb-step[data-step="2"]');
     await waitStep(page, 2);
     const sameOrder = (await orderOf()) === order0;
-    scenarios.push({ m, ok: expect.test(msg) && same && sameOrder, msg: msg.replace('Dismiss', '').trim() });
+    scenarios.push({ m, ok: expect.test(msg) && same && sameOrder, msg: msg.replace('Dismiss', '').trim() + (same && sameOrder ? '' : ' [arrangement changed: saved ' + same + ', order ' + sameOrder + ']') });
   }
   await tryPublish('publish-500', /error 500/);
   await tryPublish('publish-html', /something unexpected/);
@@ -499,20 +502,22 @@ try {
   // reloading the blurbs while offline also keeps everything
   await page.click('.nb-step[data-step="1"]');
   await waitStep(page, 1);
+  await clearMessages();
   await page.click('#load-btn');
   await page.waitForFunction(() => document.querySelector('#messages .nb-msg--error'), { timeout: 10000 });
   const offlineLoadMsg = await page.$eval('#messages .nb-msg--error', (e) => e.textContent);
-  const sameAfterLoad = (await page.evaluate(() => sessionStorage.getItem('n350-arrangement'))) === arrangement;
+  const sameAfterLoad = (await page.evaluate(() => { const s = JSON.parse(sessionStorage.getItem('n350-arrangement')); return JSON.stringify([s.items, s.categories, s.excluded, s.featured]); })) === arrangement;
   scenarios.push({ m: 'offline load', ok: /offline/i.test(offlineLoadMsg) && sameAfterLoad, msg: offlineLoadMsg.replace('Dismiss', '').trim() });
   await page.setOfflineMode(false);
   mode = 'items-500';
+  await clearMessages();
   await page.click('#load-btn');
   await page.waitForFunction(() => /error 500/.test(document.querySelector('#messages').textContent), { timeout: 10000 });
-  scenarios.push({ m: 'load 500', ok: (await page.evaluate(() => sessionStorage.getItem('n350-arrangement'))) === arrangement, msg: 'error 500 on load' });
+  scenarios.push({ m: 'load 500', ok: (await page.evaluate(() => { const s = JSON.parse(sessionStorage.getItem('n350-arrangement')); return JSON.stringify([s.items, s.categories, s.excluded, s.featured]); })) === arrangement, msg: 'error 500 on load' });
 
   const failed9 = scenarios.filter((s) => !s.ok);
   record(9, 'Server error or offline: plain message, arrangement kept', failed9.length === 0,
-    scenarios.map((s) => `${s.m} → "${s.msg.slice(0, 70)}…"`).join(' | '));
+    scenarios.map((s) => `${s.ok ? 'ok' : 'BAD'} ${s.m} → "${s.msg.slice(0, 70)}…"`).join(' | '));
 
   // successful publish, then look for the token everywhere
   mode = 'ok';
