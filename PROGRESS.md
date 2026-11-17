@@ -21,9 +21,10 @@ cd tests/e2e && npm install && node run.mjs   # browser checks 1-10
 - [x] Unit tests (`tests/*.test.js`) for checks 2 and 7
 - [x] Browser test runner (`tests/e2e/run.mjs`) for checks 1-10
 - [x] Check 9 fixed (the test read the previous scenario's message; app behavior was correct)
-- [ ] README.md for volunteers
+- [x] README.md for volunteers
 - [x] Visual review: fixed category overflow in narrow tiles, centered text tiles, capped open-tile image height
-- [ ] Final full run of both test suites, commit, push
+- [x] Final full run: 25/25 unit tests, 10/10 browser checks; committed and pushed
+- [ ] (Owner) Turn on GitHub Pages; set APPS_SCRIPT_URL and confirm BOARD_BASE_URL once the Apps Script side exists
 
 ## Last known results (browser checks)
 
