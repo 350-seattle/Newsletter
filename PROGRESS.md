@@ -26,6 +26,13 @@ cd tests/e2e && npm install && node run.mjs   # browser checks 1-10
 - [x] Final full run: 25/25 unit tests, 10/10 browser checks; committed and pushed
 - [ ] (Owner) Turn on GitHub Pages; set APPS_SCRIPT_URL and confirm BOARD_BASE_URL once the Apps Script side exists
 
+### In progress: weekly summary (requested 2026-11-16)
+The volunteer writes "everything happening this week" in the builder.
+- [ ] render-board.js: `issue.weekSummary` (sanitized, emails removed) rendered as an "In summary…" section under the grid (`.n350-recap`); added to the top of the email text; validate warns if empty, over 120 words, or contains web addresses (untracked)
+- [ ] board.css: `.n350-recap` styles
+- [ ] index.html/app.js: textarea in step 2 above the arrange list (static, not rebuilt), live word count, saved in sessionStorage as `state.weekSummary`; optional prefill from `issue.weekSummary` in the Apps Script reply
+- [ ] tests (unit + e2e check 1), README, dist rebuild, commit
+
 ## Last known results (browser checks)
 
 All 10 PASS (Lighthouse a11y 100/100 on the preview and the published board)
