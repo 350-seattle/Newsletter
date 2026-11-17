@@ -22,7 +22,7 @@ cd tests/e2e && npm install && node run.mjs   # browser checks 1-10
 - [x] Browser test runner (`tests/e2e/run.mjs`) for checks 1-10
 - [x] Check 9 fixed (the test read the previous scenario's message; app behavior was correct)
 - [ ] README.md for volunteers
-- [ ] Visual review of the PNG and screenshots against `reference/images`
+- [x] Visual review: fixed category overflow in narrow tiles, centered text tiles, capped open-tile image height
 - [ ] Final full run of both test suites, commit, push
 
 ## Last known results (browser checks)

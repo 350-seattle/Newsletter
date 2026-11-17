@@ -121,6 +121,7 @@
   padding: 0;
   min-width: 0;
   display: flex;
+  border-radius: 14px;
 }
 
 .n350-board .n350-tile::before,
@@ -197,8 +198,19 @@
   color: var(--n350-clean-ocean);
 }
 
+.n350-board .n350-team,
+.n350-board .n350-category {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.n350-board .n350-category {
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
 .n350-board .n350-sep {
-  padding: 0 0.3em;
+  display: none;
 }
 
 .n350-board .n350-badge {
@@ -243,6 +255,11 @@
 .n350-board .n350-summary:hover .n350-headline {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.n350-board .n350-tile--text {
+  align-items: center;
+  background: var(--n350-clean-ocean);
 }
 
 .n350-board .n350-tile--text .n350-details {
@@ -313,7 +330,7 @@
 
 .n350-board .n350-details[open] .n350-media img {
   aspect-ratio: auto;
-  max-height: 460px;
+  max-height: 340px;
   object-fit: contain;
 }
 
@@ -440,11 +457,11 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .n350-board .n350-details {
+  .n350-board .n350-tile {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
 
-  .n350-board .n350-tile:hover > .n350-details:not([open]) {
+  .n350-board .n350-tile:hover:not(:has(> .n350-details[open])) {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
   }
