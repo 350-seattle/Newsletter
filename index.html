@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Newsletter Builder · 350 Seattle</title>
+  <meta name="description" content="Turn approved newsletter blurbs into the 350 Seattle news board, check it, and publish it.">
+  <link rel="stylesheet" href="styles/app.css">
+  <style id="n350-fonts"></style>
+</head>
+<body class="nb-app">
+  <a class="nb-skip" href="#main">Skip to content</a>
+
+  <header class="nb-header">
+    <div class="nb-wrap nb-header-inner">
+      <p class="nb-brand">
+        <span class="nb-brand-org">350 Seattle</span>
+        <span class="nb-brand-tool">Newsletter Builder</span>
+      </p>
+      <div class="nb-header-tools">
+        <span class="nb-badge" id="sample-badge" hidden>Sample mode</span>
+        <button type="button" class="nb-btn nb-btn--quiet" id="start-over">Start over</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nb-wrap nb-steps-nav" aria-label="Steps">
+    <ol class="nb-steps">
+      <li><button type="button" class="nb-step" data-step="1"><span class="nb-step-num" aria-hidden="true">1</span><span class="nb-step-label"><span class="nb-sr">Step 1: </span>Load</span></button></li>
+      <li><button type="button" class="nb-step" data-step="2"><span class="nb-step-num" aria-hidden="true">2</span><span class="nb-step-label"><span class="nb-sr">Step 2: </span>Arrange</span></button></li>
+      <li><button type="button" class="nb-step" data-step="3"><span class="nb-step-num" aria-hidden="true">3</span><span class="nb-step-label"><span class="nb-sr">Step 3: </span>Final check</span></button></li>
+      <li><button type="button" class="nb-step" data-step="4"><span class="nb-step-num" aria-hidden="true">4</span><span class="nb-step-label"><span class="nb-sr">Step 4: </span>Publish and share</span></button></li>
+    </ol>
+  </nav>
+
+  <div class="nb-wrap">
+    <div id="messages" class="nb-messages"></div>
+  </div>
+
+  <main id="main" class="nb-wrap" tabindex="-1">
+    <noscript>
+      <p class="nb-msg nb-msg--error">The Newsletter Builder needs JavaScript turned on in your browser.</p>
+    </noscript>
+
+    <!-- Step 1 -->
+    <section class="nb-step-panel" id="step-1" data-step="1" aria-labelledby="step-1-title">
+      <h1 class="nb-title" id="step-1-title" tabindex="-1">Load this issue's blurbs</h1>
+      <p class="nb-lede">Paste the access token from the newsletter coordinator, then load the blurbs that were approved in the Google Sheet.</p>
+
+      <form id="load-form" class="nb-card nb-load" method="post" action="#" autocomplete="off" novalidate>
+        <label class="nb-label" for="token">Access token</label>
+        <p class="nb-help" id="token-help">It's kept only while this tab is open and is never saved. You'll need it again if you refresh the page.</p>
+        <input class="nb-input" id="token" name="token" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="token-help">
+        <p class="nb-help nb-token-held" id="token-held" hidden>A token is already in use for this tab.</p>
+        <button type="submit" class="nb-btn" id="load-btn">Load approved blurbs</button>
+      </form>
+
+      <p class="nb-demo">No access token, or just looking around? <a id="demo-link" href="?demo=1">Try with sample data</a></p>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="nb-step-panel" id="step-2" data-step="2" aria-labelledby="step-2-title" hidden>
+      <h1 class="nb-title" id="step-2-title" tabindex="-1">Arrange the board</h1>
+      <p class="nb-lede">Choose which items to include, put them in order, and pick one to feature. The preview updates as you go. To change the wording, edit the Google Sheet and load again.</p>
+
+      <div class="nb-arrange">
+        <div class="nb-arrange-list" id="arrange-list"></div>
+        <div class="nb-arrange-preview">
+          <h2 class="nb-h2" id="live-preview-title">Live preview</h2>
+          <div class="nb-preview" id="preview-arrange" role="region" aria-labelledby="live-preview-title"></div>
+        </div>
+      </div>
+
+      <div class="nb-actions">
+        <button type="button" class="nb-btn nb-btn--secondary" data-goto="1">Back</button>
+        <button type="button" class="nb-btn" data-goto="3">Next: Final check</button>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section class="nb-step-panel" id="step-3" data-step="3" aria-labelledby="step-3-title" hidden>
+      <h1 class="nb-title" id="step-3-title" tabindex="-1">Final check</h1>
+      <div id="check-summary" class="nb-check-summary"></div>
+
+      <div class="nb-check-grid">
+        <div class="nb-card" id="check-errors"></div>
+        <div class="nb-card" id="check-warnings"></div>
+        <div class="nb-card nb-card--wide" id="check-links"></div>
+      </div>
+
+      <h2 class="nb-h2" id="final-preview-title">The board, exactly as it will be published</h2>
+      <p class="nb-help">Click or press Enter on a tile to open it, just like readers will.</p>
+      <div class="nb-preview nb-preview--full" id="preview-final" role="region" aria-labelledby="final-preview-title"></div>
+
+      <div class="nb-actions">
+        <button type="button" class="nb-btn nb-btn--secondary" data-goto="2">Back to arrange</button>
+        <button type="button" class="nb-btn" data-goto="4">Next: Publish and share</button>
+      </div>
+    </section>
+
+    <!-- Step 4 -->
+    <section class="nb-step-panel" id="step-4" data-step="4" aria-labelledby="step-4-title" hidden>
+      <h1 class="nb-title" id="step-4-title" tabindex="-1">Publish and share</h1>
+      <p class="nb-lede">Publish the board first. The email links to the published page.</p>
+
+      <div class="nb-share-grid">
+        <section class="nb-card" aria-labelledby="publish-title">
+          <h2 class="nb-h2" id="publish-title"><span class="nb-letter" aria-hidden="true">A</span> Publish to website</h2>
+          <p class="nb-help" id="publish-note"></p>
+          <div id="publish-token-wrap" hidden>
+            <label class="nb-label" for="publish-token">Access token</label>
+            <p class="nb-help" id="publish-token-help">Needed to publish. It's kept only while this tab is open.</p>
+            <input class="nb-input" id="publish-token" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="publish-token-help">
+          </div>
+          <button type="button" class="nb-btn" id="publish-btn">Publish to website…</button>
+          <div id="publish-result" class="nb-result" hidden>
+            <label class="nb-label" for="published-url">The board is published at</label>
+            <div class="nb-copy-row">
+              <input class="nb-input" id="published-url" type="text" readonly>
+              <button type="button" class="nb-btn nb-btn--secondary" data-copy="published-url">Copy link</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="nb-card" aria-labelledby="png-title">
+          <h2 class="nb-h2" id="png-title"><span class="nb-letter" aria-hidden="true">B</span> Preview image for the email</h2>
+          <p class="nb-help">A picture of the board (1200 pixels wide) to put at the top of the EveryAction email.</p>
+          <button type="button" class="nb-btn" id="png-btn">Download preview image</button>
+          <p class="nb-status" id="png-status" role="status"></p>
+          <label class="nb-label" for="preview-link">Link for the image (paste as the image's link)</label>
+          <div class="nb-copy-row">
+            <input class="nb-input" id="preview-link" type="text" readonly>
+            <button type="button" class="nb-btn nb-btn--secondary" data-copy="preview-link">Copy</button>
+          </div>
+          <label class="nb-label" for="preview-alt">Alt text for the image</label>
+          <div class="nb-copy-row">
+            <input class="nb-input" id="preview-alt" type="text" readonly>
+            <button type="button" class="nb-btn nb-btn--secondary" data-copy="preview-alt">Copy</button>
+          </div>
+        </section>
+
+        <section class="nb-card nb-card--wide" aria-labelledby="email-title">
+          <h2 class="nb-h2" id="email-title"><span class="nb-letter" aria-hidden="true">C</span> Email text</h2>
+          <p class="nb-help">The summary for the EveryAction email: a heading for each category, then each item's headline, summary and "Read more" link. Paste it under the preview image.</p>
+          <button type="button" class="nb-btn" id="email-btn">Copy email text</button>
+          <p class="nb-status" id="email-status" role="status"></p>
+          <label class="nb-label" for="email-text">What will be copied (check the links)</label>
+          <textarea class="nb-input nb-textarea" id="email-text" rows="14" readonly></textarea>
+        </section>
+
+        <section class="nb-card" aria-labelledby="html-title">
+          <h2 class="nb-h2" id="html-title"><span class="nb-letter" aria-hidden="true">D</span> Download HTML</h2>
+          <p class="nb-help">If publishing doesn't work, download the board and paste it into a WordPress "Custom HTML" block.</p>
+          <button type="button" class="nb-btn nb-btn--secondary" id="html-btn">Download HTML</button>
+          <p class="nb-status" id="html-status" role="status"></p>
+        </section>
+      </div>
+
+      <div class="nb-actions">
+        <button type="button" class="nb-btn nb-btn--secondary" data-goto="3">Back to final check</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog class="nb-dialog" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+    <form method="dialog">
+      <h2 class="nb-h2" id="confirm-title">Publish to the website?</h2>
+      <p id="confirm-body"></p>
+      <div class="nb-actions">
+        <button type="submit" class="nb-btn nb-btn--secondary" value="cancel">Cancel</button>
+        <button type="submit" class="nb-btn" value="publish" id="confirm-yes">Yes, publish</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Off-screen area used to draw the preview image -->
+  <div id="png-stage" class="nb-png-stage" aria-hidden="true"></div>
+
+  <script src="config.js"></script>
+  <script src="render-board.js"></script>
+  <script src="vendor/html-to-image-1.11.11.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

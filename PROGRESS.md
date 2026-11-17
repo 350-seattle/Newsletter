@@ -1,0 +1,40 @@
+# Build progress (handoff notes)
+
+Working notes so anyone (or any session) can pick up where the last one
+stopped. Updated and committed after every milestone. The plan this
+follows is the "Newsletter Builder" brief; decisions are listed below.
+
+## How to check the state quickly
+
+```
+git status && git log --oneline -5
+node --test tests/                 # unit tests (expect all pass)
+node tools/build-dist.js           # regenerates dist/
+cd tests/e2e && npm install && node run.mjs   # browser checks 1-10
+```
+
+## Milestones
+
+- [x] Reference materials and brand guide (`reference/`)
+- [x] Board renderer, styles, sample data, fonts, vendored html-to-image
+- [x] Builder page (4 steps), app logic
+- [x] Unit tests (`tests/*.test.js`) for checks 2 and 7
+- [x] Browser test runner (`tests/e2e/run.mjs`) for checks 1-10
+- [ ] Check 9 reported FAIL: messages are right; suspected test bug (compares saved state byte-for-byte, but the step number changes)
+- [ ] README.md for volunteers
+- [ ] Visual review of the PNG and screenshots against `reference/images`
+- [ ] Final full run of both test suites, commit, push
+
+## Last known results (browser checks)
+
+1 PASS, 2 PASS, 3 PASS, 4 PASS, 5 PASS, 6 PASS, 7 PASS, 8 PASS, 9 FAIL (see above), 10 PASS (Lighthouse a11y 100/100)
+
+## Decisions made (approved plan)
+
+- Collapsed tile: image plus a caption strip (team, category, headline). No-image items are solid Clean Ocean tiles.
+- Open tile spans the full row in Clean Ocean, image left, text right (`<details>`, no JavaScript).
+- Featured tile is first and spans 2 columns.
+- Link text uses `#0068A5` (Clean Air darkened) because `#0081CC` fails WCAG AA on Foggy.
+- Fonts: Cal Sans (real, OFL), Fraunces and Montserrat as stand-ins, vendored into `fonts/`. The licensed fonts can be switched on in `config.js`.
+- The token lives in memory only (not sessionStorage).
+- `styles/board.css` is the single source for the board's look; `dist/` is generated.

@@ -1,0 +1,100 @@
+{
+  "ok": true,
+  "issue": { "title": "December 2026 (sample)", "slug": "2026-12", "date": "2026-12-01" },
+  "items": [
+    {
+      "id": "row-12",
+      "team": "Climate Justice",
+      "category": "Take action",
+      "headline": "Testify at the city council hearing on building emissions",
+      "summary": "Sign up to give two minutes of public comment in support of clean heat standards on December 9.",
+      "blurb": "The council votes on clean heat standards for large buildings this month. Public comment makes a real difference, and you don't need to be an expert.\n\nWe'll send talking points and a short practice session the night before. Testify in person at City Hall or join online from home.",
+      "link": "https://example.org/hearing",
+      "linkLabel": "Sign up to testify",
+      "image": "samples/hearing.svg",
+      "imageAlt": "Illustration of people holding signs outside City Hall"
+    },
+    {
+      "id": "row-14",
+      "team": "Fossil Free Finance",
+      "category": "Take action",
+      "headline": "Ask your bank to stop funding new pipelines, gas terminals and coal export projects before the end-of-year lending decisions are made in the boardroom",
+      "summary": "Use our two-minute letter tool to tell your bank where you want your money to go.",
+      "blurb": "Big banks are still lending billions to new fossil fuel projects. Customers asking directly is one of the most effective pressure points we have.\n\nOur letter tool fills in your bank's address and a short, polite message you can edit.",
+      "link": "https://example.org/banks?ref=newsletter",
+      "linkLabel": "Write your letter",
+      "image": "samples/bank.svg",
+      "imageAlt": "Illustration of a bank building with a wind turbine beside it"
+    },
+    {
+      "id": "row-17",
+      "team": "Civic Action Team",
+      "category": "Team news",
+      "headline": "The Civic Action Team is wrapping up its 10th year!",
+      "summary": "Join us online on Monday, December 14 from 6 to 7pm to celebrate ten years of the Civic Action Team.",
+      "blurb": "Ten years ago a handful of volunteers started showing up at council meetings together. Since then the team has helped pass building standards, defend transit funding, and train hundreds of first-time testifiers.\n\nCome hear the stories, meet the people behind them, and help plan what comes next.",
+      "link": "https://example.org/cat-10",
+      "linkLabel": "RSVP to the celebration"
+    },
+    {
+      "id": "row-21",
+      "team": "Climate Action Families",
+      "category": "Events",
+      "headline": "Repurposing invasive plants into art",
+      "summary": "Kids and grown-ups pull ivy at the wetland, then turn it into baskets and wreaths on December 12.",
+      "blurb": "Climate Action Families is teaming up with a local restoration group for a hands-on work party. We'll clear invasive ivy in the morning and weave it into art after lunch.\n\nGloves and tools provided. Wear clothes that can get muddy.",
+      "link": "https://example.org/ivy-art",
+      "linkLabel": "RSVP here",
+      "image": "samples/plants.svg",
+      "imageAlt": "Illustration of green leaves woven into a wreath"
+    },
+    {
+      "id": "row-22",
+      "team": "Community Organizing",
+      "category": "Events",
+      "headline": "December Climate Community Night",
+      "summary": "A potluck, new volunteer orientation, and a mini skills training at our Pioneer Square space on December 16.",
+      "blurb": "Bring a dish and a friend. New volunteer orientation starts at 6:15, the potluck at 6:30, and a short skills training at 7.\n\nEveryone is welcome, whether this is your first event or your hundredth.",
+      "link": "https://example.org/community-night",
+      "linkLabel": "RSVP here",
+      "image": "samples/community-night.svg",
+      "imageAlt": "Illustration of a room with paper lanterns and people at round tables"
+    },
+    {
+      "id": "row-25",
+      "team": "Art Builds",
+      "category": "Events",
+      "headline": "Paint banners for the winter climate march",
+      "summary": "Drop in any time on December 5 to help paint the giant banners for January's march.",
+      "blurb": "No art experience needed. We'll have stencils, paint, and snacks. Banners we make together will lead the march downtown in January.",
+      "link": "https://example.org/art-build",
+      "linkLabel": "See the details",
+      "image": "samples/banner.svg",
+      "imageAlt": "Illustration of a paint brush over a striped banner"
+    },
+    {
+      "id": "row-30",
+      "team": "Volunteer Coordination",
+      "category": "Get involved",
+      "headline": "Five new ways to volunteer this winter",
+      "summary": "From tabling to phone banking, find a role that fits the time you have.",
+      "blurb": "Our updated volunteer guide lists every open role, how much time each takes, and who to talk to. Most roles need just an hour or two a month.",
+      "link": "https://example.org/volunteer",
+      "linkLabel": "Open the volunteer guide",
+      "image": "samples/volunteer.svg",
+      "imageAlt": "Illustration of raised hands in different colors"
+    },
+    {
+      "id": "row-31",
+      "team": "Transportation",
+      "category": "Get involved",
+      "headline": "Help count bikes and buses on Rainier Ave",
+      "summary": "Spend one morning counting riders so we can make the case for a protected bus lane.",
+      "blurb": "City planners listen to data. We need volunteers at six corners for two-hour shifts on December 10. We'll train you on the counting app the week before.",
+      "link": "https://example.org/count",
+      "linkLabel": "Pick a shift",
+      "image": "samples/bus.svg",
+      "imageAlt": "Illustration of a bus and a bicycle on a city street"
+    }
+  ]
+}

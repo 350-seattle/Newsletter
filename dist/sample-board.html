@@ -1,0 +1,495 @@
+<style>
+.n350-board {
+  
+  --n350-clean-air: #0081CC;       
+  --n350-no-more-coal: #000000;    
+  --n350-clean-ocean: #4254B0;     
+  --n350-foggy-seattle: #E8E6E0;   
+  --n350-lichen: #D6E4DA;          
+  --n350-reforestation: #278C43;   
+  --n350-paper: #FFFFFF;
+  --n350-off-white: #F7F6F2;
+
+  
+  --n350-link: #0068A5;
+  --n350-muted: #4B4F5A;
+  --n350-border: #1D1D1B;
+
+  
+  --n350-font-header: "N350 Cal Sans", "Cal Sans", "Helvetica Neue", Arial, sans-serif;
+  --n350-font-accent: "N350 New Kansas", "N350 Fraunces", Georgia, "Times New Roman", serif;
+  --n350-font-body: "N350 Avant Garde", "N350 Montserrat", "Century Gothic", "Avenir Next", Arial, sans-serif;
+
+  container-type: inline-size;
+  container-name: n350;
+  box-sizing: border-box;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 16px 32px;
+  background: var(--n350-paper);
+  color: var(--n350-no-more-coal);
+  font-family: var(--n350-font-body);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.n350-board *,
+.n350-board *::before,
+.n350-board *::after {
+  box-sizing: border-box;
+}
+
+.n350-board img {
+  max-width: 100%;
+  border: 0;
+}
+
+.n350-board p {
+  margin: 0 0 0.9em;
+}
+
+.n350-board .n350-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.n350-board .n350-masthead {
+  text-align: center;
+  padding: 8px 0 20px;
+  margin: 0 0 24px;
+  border-bottom: 1px solid #9A9B9A;
+}
+
+.n350-board .n350-org {
+  margin: 0;
+  font-family: var(--n350-font-header);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 11cqi, 4.5rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--n350-no-more-coal);
+}
+
+.n350-board .n350-kicker {
+  margin: 0.1em 0 0.15em;
+  font-family: var(--n350-font-accent);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.9rem, 8cqi, 3.4rem);
+  line-height: 1.1;
+}
+
+.n350-board .n350-date {
+  margin: 0;
+  font-size: clamp(1rem, 3.4cqi, 1.5rem);
+}
+
+.n350-board .n350-heading {
+  margin: 0 0 14px;
+  font-family: var(--n350-font-header);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 6cqi, 2.4rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--n350-no-more-coal);
+}
+
+.n350-board .n350-grid {
+  list-style: none;
+  margin: 0;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-flow: row dense;
+  gap: 16px;
+  background: var(--n350-foggy-seattle);
+  border: 2px solid var(--n350-border);
+  border-radius: 28px;
+}
+
+.n350-board .n350-tile {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+}
+
+.n350-board .n350-tile::before,
+.n350-board .n350-tile::marker {
+  content: none;
+}
+
+.n350-board .n350-details {
+  flex: 1 1 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: var(--n350-paper);
+  color: var(--n350-no-more-coal);
+}
+
+.n350-board .n350-summary {
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  cursor: pointer;
+  border-radius: 14px;
+  color: inherit;
+  background: none;
+}
+
+.n350-board .n350-summary::-webkit-details-marker {
+  display: none;
+}
+
+.n350-board .n350-summary::marker {
+  content: "";
+}
+
+.n350-board .n350-summary:focus {
+  outline: none;
+}
+
+.n350-board .n350-summary:focus-visible {
+  outline: 3px solid var(--n350-border);
+  outline-offset: 4px;
+}
+
+.n350-board .n350-media {
+  display: block;
+  background: #D9D6CC;
+  border-radius: 14px 14px 0 0;
+}
+
+.n350-board .n350-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 14px 14px 0 0;
+}
+
+.n350-board .n350-caption {
+  display: block;
+  padding: 12px 14px 14px;
+}
+
+.n350-board .n350-meta {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--n350-clean-ocean);
+}
+
+.n350-board .n350-sep {
+  padding: 0 0.3em;
+}
+
+.n350-board .n350-badge {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--n350-lichen);
+  color: var(--n350-no-more-coal);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.n350-board .n350-headline {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  font-family: var(--n350-font-header);
+  font-weight: 400;
+  font-size: 1.08rem;
+  line-height: 1.22;
+  overflow-wrap: anywhere;
+}
+
+.n350-board .n350-toggle {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--n350-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.n350-board .n350-toggle-close {
+  display: none;
+}
+
+.n350-board .n350-summary:hover .n350-headline {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.n350-board .n350-tile--text .n350-details {
+  background: var(--n350-clean-ocean);
+  color: var(--n350-paper);
+}
+
+.n350-board .n350-tile--text .n350-summary {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.n350-board .n350-tile--text .n350-caption {
+  padding: 24px 18px;
+}
+
+.n350-board .n350-tile--text .n350-meta,
+.n350-board .n350-tile--text .n350-toggle {
+  color: var(--n350-paper);
+}
+
+.n350-board .n350-tile--text .n350-headline {
+  -webkit-line-clamp: 7;
+  font-size: 1.45rem;
+  line-height: 1.15;
+}
+
+.n350-board .n350-tile--featured .n350-media img {
+  aspect-ratio: 3 / 2;
+}
+
+.n350-board .n350-tile--featured .n350-headline {
+  font-size: 1.35rem;
+}
+
+.n350-board .n350-tile:has(> .n350-details[open]) {
+  grid-column: 1 / -1;
+}
+
+.n350-board .n350-details[open] {
+  background: var(--n350-clean-ocean);
+  color: var(--n350-paper);
+}
+
+.n350-board .n350-details[open] > .n350-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  min-height: 0;
+  padding: 20px 20px 4px;
+  text-align: left;
+}
+
+.n350-board .n350-details[open] > .n350-summary:focus-visible {
+  outline: 3px solid var(--n350-paper);
+  outline-offset: -3px;
+}
+
+.n350-board .n350-details[open] .n350-media,
+.n350-board .n350-details[open] .n350-media img {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.n350-board .n350-details[open] .n350-media img {
+  aspect-ratio: auto;
+  max-height: 460px;
+  object-fit: contain;
+}
+
+.n350-board .n350-details[open] .n350-caption {
+  padding: 0;
+}
+
+.n350-board .n350-details[open] .n350-meta {
+  color: var(--n350-off-white);
+}
+
+.n350-board .n350-details[open] .n350-team {
+  display: block;
+  margin: 0 0 6px;
+  font-family: var(--n350-font-header);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 5cqi, 2.6rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--n350-paper);
+}
+
+.n350-board .n350-details[open] .n350-sep {
+  display: none;
+}
+
+.n350-board .n350-details[open] .n350-headline {
+  display: block;
+  -webkit-line-clamp: none;
+  overflow: visible;
+  margin-top: 6px;
+  font-size: 1.3rem;
+}
+
+.n350-board .n350-details[open] .n350-toggle {
+  color: var(--n350-paper);
+}
+
+.n350-board .n350-details[open] .n350-toggle-open {
+  display: none;
+}
+
+.n350-board .n350-details[open] .n350-toggle-close {
+  display: inline;
+}
+
+.n350-board .n350-body {
+  padding: 12px 20px 24px;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.n350-board .n350-body p {
+  margin: 0 0 0.9em;
+  max-width: 68ch;
+}
+
+.n350-board .n350-body a {
+  color: var(--n350-paper);
+}
+
+.n350-board .n350-button {
+  display: inline-block;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: var(--n350-paper);
+  color: var(--n350-clean-ocean);
+  font-family: var(--n350-font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.n350-board .n350-body a.n350-button {
+  color: var(--n350-clean-ocean);
+}
+
+.n350-board .n350-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.n350-board a:focus-visible {
+  outline: 3px solid var(--n350-paper);
+  outline-offset: 3px;
+}
+
+@container n350 (min-width: 30rem) {
+  .n350-board .n350-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 20px;
+    gap: 18px;
+  }
+
+  .n350-board .n350-tile--featured {
+    grid-column: span 2;
+  }
+}
+
+@container n350 (min-width: 34.5rem) {
+  .n350-board .n350-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .n350-board .n350-details[open] > .n350-summary {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 24px;
+  }
+
+  .n350-board .n350-tile--text .n350-details[open] > .n350-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container n350 (min-width: 56rem) {
+  .n350-board .n350-grid {
+    padding: 28px;
+    gap: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .n350-board .n350-details {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .n350-board .n350-tile:hover > .n350-details:not([open]) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .n350-board *,
+  .n350-board *::before,
+  .n350-board *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@font-face {
+  font-family: "N350 Cal Sans";
+  src: url("https://cody-trinkaus.github.io/NewsletterBuilder/fonts/cal-sans-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "N350 Fraunces";
+  src: url("https://cody-trinkaus.github.io/NewsletterBuilder/fonts/fraunces-latin-400-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "N350 Montserrat";
+  src: url("https://cody-trinkaus.github.io/NewsletterBuilder/fonts/montserrat-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "N350 Montserrat";
+  src: url("https://cody-trinkaus.github.io/NewsletterBuilder/fonts/montserrat-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+</style>
+<div class="n350-board" lang="en"><header class="n350-masthead"><p class="n350-org">350 Seattle</p><p class="n350-kicker">Newsletter</p><p class="n350-date">December 1st, 2026</p></header><section class="n350-section" aria-label="350 Seattle Newsletter, December 2026 (sample) news board"><h2 class="n350-heading">News Board</h2><ul class="n350-grid"><li class="n350-tile n350-tile--image"><details class="n350-details"><summary class="n350-summary"><span class="n350-media"><img src="https://cody-trinkaus.github.io/NewsletterBuilder/samples/hearing.svg" alt="Illustration of people holding signs outside City Hall" loading="lazy" decoding="async"></span><span class="n350-caption"><span class="n350-meta"><span class="n350-team">Climate Justice</span><span class="n350-sep" aria-hidden="true">·</span><span class="n350-category">Take action</span></span><span class="n350-headline">Testify at the city council hearing on building emissions</span><span class="n350-toggle" aria-hidden="true"><span class="n350-toggle-open">Read the update +</span><span class="n350-toggle-close">Close &minus;</span></span></span></summary><div class="n350-body"><p>The council votes on clean heat standards for large buildings this month. Public comment makes a real difference, and you don&#39;t need to be an expert.</p><p>We&#39;ll send talking points and a short practice session the night before. Testify in person at City Hall or join online from home.</p><p><a class="n350-button" href="https://example.org/hearing?utm_source=website&amp;utm_medium=newsletter-board&amp;utm_campaign=2026-12&amp;utm_content=climate-justice-row-12" target="_blank" rel="noopener noreferrer">Sign up to testify<span class="n350-sr"> about Testify at the city council hearing on building emissions (opens in a new tab)</span></a></p></div></details></li><li class="n350-tile n350-tile--image"><details class="n350-details"><summary class="n350-summary"><span class="n350-media"><img src="https://cody-trinkaus.github.io/NewsletterBuilder/samples/bank.svg" alt="Illustration of a bank building with a wind turbine beside it" loading="lazy" decoding="async"></span><span class="n350-caption"><span class="n350-meta"><span class="n350-team">Fossil Free Finance</span><span class="n350-sep" aria-hidden="true">·</span><span class="n350-category">Take action</span></span><span class="n350-headline">Ask your bank to stop funding new pipelines, gas terminals and coal export projects before the end-of-year lending decisions are made in the boardroom</span><span class="n350-toggle" aria-hidden="true"><span class="n350-toggle-open">Read the update +</span><span class="n350-toggle-close">Close &minus;</span></span></span></summary><div class="n350-body"><p>Big banks are still lending billions to new fossil fuel projects. Customers asking directly is one of the most effective pressure points we have.</p><p>Our letter tool fills in your bank&#39;s address and a short, polite message you can edit.</p><p><a class="n350-button" href="https://example.org/banks?ref=newsletter&amp;utm_source=website&amp;utm_medium=newsletter-board&amp;utm_campaign=2026-12&amp;utm_content=fossil-free-finance-row-14" target="_blank" rel="noopener noreferrer">Write your letter<span class="n350-sr"> about Ask your bank to stop funding new pipelines, gas terminals and coal export projects before the end-of-year lending decisions are made in the boardroom (opens in a new tab)</span></a></p></div></details></li><li class="n350-tile n350-tile--text"><details class="n350-details"><summary class="n350-summary"><span class="n350-caption"><span class="n350-meta"><span class="n350-team">Civic Action Team</span><span class="n350-sep" aria-hidden="true">·</span><span class="n350-category">Team news</span></span><span class="n350-headline">The Civic Action Team is wrapping up its 10th year!</span><span class="n350-toggle" aria-hidden="true"><span class="n350-toggle-open">Read the update +</span><span class="n350-toggle-close">Close &minus;</span></span></span></summary><div class="n350-body"><p>Ten years ago a handful of volunteers started showing up at council meetings together. Since then the team has helped pass building standards, defend transit funding, and train hundreds of first-time testifiers.</p><p>Come hear the stories, meet the people behind them, and help plan what comes next.</p><p><a class="n350-button" href="https://example.org/cat-10?utm_source=website&amp;utm_medium=newsletter-board&amp;utm_campaign=2026-12&amp;utm_content=civic-action-team-row-17" target="_blank" rel="noopener noreferrer">RSVP to the celebration<span class="n350-sr"> about The Civic Action Team is wrapping up its 10th year! (opens in a new tab)</span></a></p></div></details></li><li class="n350-tile n350-tile--image"><details class="n350-details"><summary class="n350-summary"><span class="n350-media"><img src="https://cody-trinkaus.github.io/NewsletterBuilder/samples/plants.svg" alt="Illustration of green leaves woven into a wreath" loading="lazy" decoding="async"></span><span class="n350-caption"><span class="n350-meta"><span class="n350-team">Climate Action Families</span><span class="n350-sep" aria-hidden="true">·</span><span class="n350-category">Events</span></span><span class="n350-headline">Repurposing invasive plants into art</span><span class="n350-toggle" aria-hidden="true"><span class="n350-toggle-open">Read the update +</span><span class="n350-toggle-close">Close &minus;</span></span></span></summary><div class="n350-body"><p>Climate Action Families is teaming up with a local restoration group for a hands-on work party. We&#39;ll clear invasive ivy in the morning and weave it into art after lunch.</p><p>Gloves and tools provided. Wear clothes that can get muddy.</p><p><a class="n350-button" href="https://example.org/ivy-art?utm_source=website&amp;utm_medium=newsletter-board&amp;utm_campaign=2026-12&amp;utm_content=climate-action-families-row-21" target="_blank" rel="noopener noreferrer">RSVP here<span class="n350-sr"> about Repurposing invasive plants into art (opens in a new tab)</span></a></p></div></details></li><li class="n350-tile n350-tile--image"><details class="n350-details"><summary class="n350-summary"><span class="n350-media"><img src="https://cody-trinkaus.github.io/NewsletterBuilder/samples/community-night.svg" alt="Illustration of a room with paper lanterns and people at round tables" loading="lazy" decoding="async"></span><span class="n350-caption"><span class="n350-meta"><span class="n350-team">Community Organizing</span><span class="n350-sep" aria-hidden="true">·</span><span class="n350-category">Events</span></span><span class="n350-headline">December Climate Community Night</span><span class="n350-toggle" aria-hidden="true"><span class="n350-toggle-open">Read the update +</span><span class="n350-toggle-close">Close &minus;</span></span></span></summary><div class="n350-body"><p>Bring a dish and a friend. New volunteer orientation starts at 6:15, the potluck at 6:30, and a short skills training at 7.</p><p>Everyone is welcome, whether this is your first event or your hundredth.</p><p><a class="n350-button" href="https://example.org/community-night?utm_source=website&amp;utm_medium=newsletter-board&amp;utm_campaign=2026-12&amp;utm_content=community-organizing-row-22" target="_blank" rel="noopener noreferrer">RSVP here<span class="n350-sr"> about December Climate Community Night (opens in a new tab)</span></a></p></div></details></li><li class="n350-tile n350-tile--image"><details class="n350-details"><summary class="n350-summary"><span class="n350-media"><img src="https://cody-trinkaus.github.io/NewsletterBuilder/samples/banner.svg" alt="Illustration of a paint brush over a striped banner" loading="lazy" decoding="async"></span><span class="n350-caption"><span class="n350-meta"><span class="n350-team">Art Builds</span><span class="n350-sep" aria-hidden="true">·</span><span class="n350-category">Events</span></span><span class="n350-headline">Paint banners for the winter climate march</span><span class="n350-toggle" aria-hidden="true"><span class="n350-toggle-open">Read the update +</span><span class="n350-toggle-close">Close &minus;</span></span></span></summary><div class="n350-body"><p>No art experience needed. We&#39;ll have stencils, paint, and snacks. Banners we make together will lead the march downtown in January.</p><p><a class="n350-button" href="https://example.org/art-build?utm_source=website&amp;utm_medium=newsletter-board&amp;utm_campaign=2026-12&amp;utm_content=art-builds-row-25" target="_blank" rel="noopener noreferrer">See the details<span class="n350-sr"> about Paint banners for the winter climate march (opens in a new tab)</span></a></p></div></details></li><li class="n350-tile n350-tile--image"><details class="n350-details"><summary class="n350-summary"><span class="n350-media"><img src="https://cody-trinkaus.github.io/NewsletterBuilder/samples/volunteer.svg" alt="Illustration of raised hands in different colors" loading="lazy" decoding="async"></span><span class="n350-caption"><span class="n350-meta"><span class="n350-team">Volunteer Coordination</span><span class="n350-sep" aria-hidden="true">·</span><span class="n350-category">Get involved</span></span><span class="n350-headline">Five new ways to volunteer this winter</span><span class="n350-toggle" aria-hidden="true"><span class="n350-toggle-open">Read the update +</span><span class="n350-toggle-close">Close &minus;</span></span></span></summary><div class="n350-body"><p>Our updated volunteer guide lists every open role, how much time each takes, and who to talk to. Most roles need just an hour or two a month.</p><p><a class="n350-button" href="https://example.org/volunteer?utm_source=website&amp;utm_medium=newsletter-board&amp;utm_campaign=2026-12&amp;utm_content=volunteer-coordination-row-30" target="_blank" rel="noopener noreferrer">Open the volunteer guide<span class="n350-sr"> about Five new ways to volunteer this winter (opens in a new tab)</span></a></p></div></details></li><li class="n350-tile n350-tile--image"><details class="n350-details"><summary class="n350-summary"><span class="n350-media"><img src="https://cody-trinkaus.github.io/NewsletterBuilder/samples/bus.svg" alt="Illustration of a bus and a bicycle on a city street" loading="lazy" decoding="async"></span><span class="n350-caption"><span class="n350-meta"><span class="n350-team">Transportation</span><span class="n350-sep" aria-hidden="true">·</span><span class="n350-category">Get involved</span></span><span class="n350-headline">Help count bikes and buses on Rainier Ave</span><span class="n350-toggle" aria-hidden="true"><span class="n350-toggle-open">Read the update +</span><span class="n350-toggle-close">Close &minus;</span></span></span></summary><div class="n350-body"><p>City planners listen to data. We need volunteers at six corners for two-hour shifts on December 10. We&#39;ll train you on the counting app the week before.</p><p><a class="n350-button" href="https://example.org/count?utm_source=website&amp;utm_medium=newsletter-board&amp;utm_campaign=2026-12&amp;utm_content=transportation-row-31" target="_blank" rel="noopener noreferrer">Pick a shift<span class="n350-sr"> about Help count bikes and buses on Rainier Ave (opens in a new tab)</span></a></p></div></details></li></ul></section></div>
