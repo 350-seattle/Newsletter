@@ -224,3 +224,28 @@ test('validate: errors and warnings', () => {
   const few = N350.validate({}, [base]);
   assert.match(few.warnings.map((w) => w.message).join(), /Only 1 item is included/);
 });
+
+test('weekly summary: rendered under the board, escaped, emails removed', () => {
+  const raw = { title: 'T', slug: 't', date: '2026-12-01',
+    weekSummary: 'Big week! <script>alert(1)</script>\n\nEmail me at volunteer@example.org & join us.' };
+  const clean = N350.sanitizeIssue(raw);
+  assert.ok(clean.warnings.some((w) => w.field === 'weekSummary'), 'warns about the removed address');
+  const items = N350.sanitizeItems(sample.items).items;
+  const { html, fragment } = N350.render(clean.issue, items, OPTS);
+  assertSafeFragment(fragment);
+  assert.match(html, /<section class="n350-recap"[^>]*><h2 class="n350-heading">In summary&hellip;<\/h2><div class="n350-recap-text"><p>Big week! &lt;script&gt;/);
+  assert.ok(html.indexOf('n350-recap') > html.indexOf('</ul>'), 'summary comes after the board');
+  assert.equal((html.match(/<div class="n350-recap-text"><p>[\s\S]*?<\/div>/)[0].match(/<p>/g) || []).length, 2, 'two paragraphs');
+  // even an unsanitized issue never leaks an address
+  assert.ok(!N350.render(raw, items, OPTS).html.includes('volunteer@example.org'));
+});
+
+test('weekly summary: no section when empty; validation warnings', () => {
+  const items = N350.sanitizeItems(sample.items).items;
+  assert.ok(!N350.render({ slug: 't' }, items, OPTS).html.includes('n350-recap'));
+  const msgs = (issue) => N350.validate(issue, items).warnings.map((w) => w.message).join('\n');
+  assert.match(msgs({ slug: 't' }), /no weekly summary/);
+  assert.match(msgs({ slug: 't', weekSummary: Array(121).fill('word').join(' ') }), /121 words/);
+  assert.match(msgs({ slug: 't', weekSummary: 'See www.example.org' }), /contains a web address/);
+  assert.equal(N350.validate({ slug: 't', weekSummary: 'A fine week.' }, items).errors.length, 0, 'never blocks publishing');
+});

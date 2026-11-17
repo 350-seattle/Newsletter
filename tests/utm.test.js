@@ -119,3 +119,13 @@ test('existing query string and hash are kept exactly', () => {
   assert.equal(out, 'https://example.org/page?a=1&b=two%20words&utm_source=everyaction&utm_medium=email&utm_campaign=c&utm_content=x#section-2');
   assert.equal(N350.tagUrl('javascript:alert(1)', { a: 'b' }), null);
 });
+
+test('weekly summary sits at the top of the email and adds no links', () => {
+  const withRecap = Object.assign({}, issue, { weekSummary: 'Lots happening.\n\nSee you there.' });
+  const email = N350.buildEmail(withRecap, items, BOARD);
+  assert.ok(email.text.startsWith('IN SUMMARY…\n\nLots happening.\n\nSee you there.\n\n'));
+  assert.ok(email.html.startsWith('<h3'));
+  assert.ok(email.html.indexOf('Lots happening.') < email.html.indexOf(N350.escapeHtml(items[0].category)));
+  assert.equal(email.links.length, items.length, 'no extra links');
+  assert.deepEqual(email.text.match(/https?:\/\/\S+/g), email.links.map((l) => l.url));
+});

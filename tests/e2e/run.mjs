@@ -193,8 +193,22 @@ try {
   });
   // refresh keeps the arrangement
   const before = await page.evaluate(() => sessionStorage.getItem('n350-arrangement'));
+  // weekly summary: prefilled from the sample, then rewritten by the volunteer
+  const prefilled = await page.$eval('#week-summary', (t) => t.value.startsWith('This week is packed'));
+  const RECAP = 'A big week for climate action.\n\nCome say hi at Community Night!';
+  await page.click('#week-summary', { clickCount: 3 });
+  await page.evaluate(() => { document.getElementById('week-summary').value = ''; });
+  await page.type('#week-summary', RECAP);
+  await sleep(500);
+  const recapInPreview = await page.evaluate(() => {
+    const r = document.querySelector('#preview-arrange').shadowRoot.querySelector('.n350-recap');
+    return !!r && r.textContent.includes('A big week for climate action.') && r.querySelectorAll('p').length === 2;
+  });
+  const recapCount = await page.$eval('#recap-count', (e) => e.textContent);
+
   await page.reload({ waitUntil: 'networkidle0' });
   await waitStep(page, 2);
+  const recapAfterRefresh = await page.$eval('#week-summary', (t) => t.value);
   const after = await page.evaluate(() => sessionStorage.getItem('n350-arrangement'));
   const keptAfterRefresh = JSON.parse(before).categories[0].name === JSON.parse(after).categories[0].name &&
     JSON.stringify(JSON.parse(before).excluded) === JSON.stringify(JSON.parse(after).excluded);
@@ -243,6 +257,12 @@ try {
     loaded: tiles0 === sample.items.length,
     leftOut: tiles1 === sample.items.length - 1,
     featuredFirst, keptAfterRefresh,
+    summaryPrefilled: prefilled,
+    summaryInPreview: recapInPreview,
+    summaryWordCount: /^12 words\./.test(recapCount),
+    summaryKeptAfterRefresh: recapAfterRefresh === RECAP,
+    summaryInEmail: emailText.startsWith('IN SUMMARY…\n\nA big week for climate action.'),
+    summaryInDownload: !!fragmentFile && fs.readFileSync(fragmentFile, 'utf8').includes('Come say hi at Community Night!'),
     finalTiles: finalTiles === sample.items.length - 1,
     linkRows: linkRows === sample.items.length - 1,
     tileOpens: opened,

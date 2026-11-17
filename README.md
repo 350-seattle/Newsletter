@@ -25,7 +25,9 @@ The bar across the top shows where you are. Once blurbs are loaded you can jump 
 Paste the access token and click **Load approved blurbs**. Only rows ticked *Approved* in the Sheet come through.
 
 ### 2. Arrange
-Items are grouped by category (Take action, Events, and so on).
+First, write **This week in summary**: a few friendly sentences about everything happening this week. It appears as an "In summary…" section under the board and at the top of the email. Leave a blank line between paragraphs. Aim for 120 words or fewer, and don't paste links or email addresses into it (put links in the items instead). If the Sheet sends a draft summary, it's filled in for you to edit. What you write is kept if you refresh or reload the blurbs.
+
+Then arrange the items. They're grouped by category (Take action, Events, and so on).
 - **Include**: untick to leave an item off this issue.
 - **Featured**: tick one item to make it the big first tile.
 - **Up / Down**: change the order of items, or of whole groups.
@@ -66,6 +68,9 @@ The links include tracking tags (`utm_...`) so EveryAction and the website can s
 | has no image | It shows as a solid blue tile with the headline. That's fine; it just stands out less. |
 | has an image but no alt text | Add a short description of the picture in the Sheet so people using screen readers know what it shows. |
 | Only 1 or 2 items are included | Boards look best with at least 3. |
+| There is no weekly summary yet | Write one in step 2. Without it, the board and email skip the "In summary…" section. |
+| The weekly summary is more than 120 words | Try to keep it short; readers skim. |
+| The weekly summary contains a web address | Links there show as plain text and aren't tracked. Put the link on an item instead. |
 | An email address was removed | Someone put an address in a blurb. It was taken out automatically; check the wording still makes sense. |
 
 ### If something goes wrong
@@ -139,7 +144,7 @@ Plain HTML, CSS and JavaScript: no framework, no build step, nothing loaded from
 | `tests/` | Unit tests and browser acceptance checks |
 | `reference/` | The process book, workflow deck, brand guide and images this is based on |
 
-**The Apps Script contract:** every call is a `POST` to `APPS_SCRIPT_URL` with `Content-Type: text/plain` and a JSON body that includes the token. `{"action":"items"}` returns `{ok, issue, items}`; `{"action":"publish", slug, title, html}` returns `{ok, url, postId}`. On failure: `{ok:false, error}`.
+**The Apps Script contract:** every call is a `POST` to `APPS_SCRIPT_URL` with `Content-Type: text/plain` and a JSON body that includes the token. `{"action":"items"}` returns `{ok, issue, items}` (`issue.weekSummary` is optional; if present it pre-fills the weekly summary box); `{"action":"publish", slug, title, html}` returns `{ok, url, postId}`. On failure: `{ok:false, error}`.
 
 ### Running it on your own computer
 
