@@ -75,3 +75,8 @@ New order: 1 Sign in, 2 Review in the Sheet (+ "Load approved blurbs" at the bot
 - [x] app.css: 5-step indicator (wraps on phones)
 - [x] tests/e2e/run.mjs: renumber steps; README: five steps
 - [x] full test run, commit
+
+### In progress: Sheet protected by sign-in (requested 2026-11-19)
+- [ ] app.js renderSheetPanel: three modes, placeholder (no SHEET_URL) / locked (signed out: sign-in button, no iframe, no Sheet link anywhere) / frame (signed in). Re-render only when the mode changes; sign-out and expiry (timer at exp) remove the iframe
+- [ ] e2e check 11: locked with SHEET_URL set and signed out (no iframe, no docs.google.com request), unlocks after signing in from the panel, locks again on sign out
+- [ ] README; commit
