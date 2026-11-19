@@ -50,7 +50,7 @@ Replaces the pasted token everywhere.
 
 ## Last known results (browser checks)
 
-All 11 PASS (10 from the brief + extra check 11 for the Sheet panel and 350-only sign-in). Lighthouse a11y 100/100. 30 unit tests pass.
+All 11 PASS (10 from the brief, with check 5 now covering all five steps, + extra check 11 for the Sheet step and 350-only sign-in). Lighthouse a11y 100/100. 30 unit tests pass.
 
 ## Decisions made (approved plan)
 
@@ -68,10 +68,10 @@ All 11 PASS (10 from the brief + extra check 11 for the Sheet panel and 350-only
 - Google Cloud OAuth client (see README "One-time setup") and the Apps Script's ID-token check still need to be done by someone with 350 Workspace access.
 - The Sheet holds submitter emails; it shows inside the builder only to people it is shared with. Consider moving contact emails to a separate tab.
 
-### In progress: five steps, Sheet as step 2 (requested 2026-11-19)
+### Done: five steps, Sheet as step 2 (requested 2026-11-19)
 New order: 1 Sign in, 2 Review in the Sheet (+ "Load approved blurbs" at the bottom), 3 Arrange, 4 Final check, 5 Publish and share.
-- [ ] index.html: split step 1; renumber sections/ids/data-step/data-goto (old 2,3,4 -> 3,4,5)
-- [ ] app.js: steps 1-2 always reachable, 3-5 need data; loading goes to 3; saved-state version 2 (old saves are ignored); clamps to 5
-- [ ] app.css: 5-step indicator (wraps on phones)
-- [ ] tests/e2e/run.mjs: renumber steps; README: five steps
-- [ ] full test run, commit
+- [x] index.html: split step 1; renumber sections/ids/data-step/data-goto (old 2,3,4 -> 3,4,5)
+- [x] app.js: steps 1-2 always reachable, 3-5 need data; loading goes to 3; saved-state version 2 (old saves are ignored); clamps to 5
+- [x] app.css: 5-step indicator (wraps on phones)
+- [x] tests/e2e/run.mjs: renumber steps; README: five steps
+- [x] full test run, commit

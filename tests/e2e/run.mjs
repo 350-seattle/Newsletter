@@ -207,7 +207,7 @@ try {
   const dl = path.join(out, 'downloads-demo');
   const page = await newPage({ downloads: dl });
   await page.goto(ORIGIN + '/index.html?demo=1', { waitUntil: 'networkidle0' });
-  await waitStep(page, 2);
+  await waitStep(page, 3);
   const tiles0 = await shadowCount(page, '#preview-arrange', '.n350-tile');
   // arrange: leave one out, feature one, move one, move a category
   const ids = await page.$$eval('#arrange-list input[id^="inc-"]', (els) => els.map((e) => e.id));
@@ -236,14 +236,14 @@ try {
   const recapCount = await page.$eval('#recap-count', (e) => e.textContent);
 
   await page.reload({ waitUntil: 'networkidle0' });
-  await waitStep(page, 2);
+  await waitStep(page, 3);
   const recapAfterRefresh = await page.$eval('#week-summary', (t) => t.value);
   const after = await page.evaluate(() => sessionStorage.getItem('n350-arrangement'));
   const keptAfterRefresh = JSON.parse(before).categories[0].name === JSON.parse(after).categories[0].name &&
     JSON.stringify(JSON.parse(before).excluded) === JSON.stringify(JSON.parse(after).excluded);
 
-  await page.click('#step-2 [data-goto="3"]');
-  await waitStep(page, 3);
+  await page.click('#step-3 [data-goto="4"]');
+  await waitStep(page, 4);
   const finalTiles = await shadowCount(page, '#preview-final', '.n350-tile');
   const linkRows = await page.$$eval('#check-links tbody tr', (r) => r.length);
   const opened = await page.evaluate(() => {
@@ -253,8 +253,8 @@ try {
   });
   await page.screenshot({ path: path.join(out, 'step3-1280.png'), fullPage: true });
 
-  await page.click('#step-3 [data-goto="4"]');
-  await waitStep(page, 4);
+  await page.click('#step-4 [data-goto="5"]');
+  await waitStep(page, 5);
   await page.click('#html-btn');
   fragmentFile = await waitForFile(dl, /^newsletter-.*\.html$/);
   await page.click('#png-btn');
@@ -379,8 +379,8 @@ try {
   for (const width of [375, 768, 1280]) {
     const page = await newPage({ width, height: 900 });
     await page.goto(ORIGIN + '/index.html?demo=1', { waitUntil: 'networkidle0' });
-    await waitStep(page, 2);
-    for (const step of [2, 3, 4, 1]) {
+    await waitStep(page, 3);
+    for (const step of [3, 4, 5, 1, 2]) {
       await page.click(`.nb-step[data-step="${step}"]`);
       await waitStep(page, step);
       await sleep(150);
@@ -388,8 +388,8 @@ try {
       if (!s.ok) { ok = false; notes.push(`${width}px step ${step}: scrollWidth ${s.scrollWidth}`); }
       if (step === 2 || step === 3) await page.screenshot({ path: path.join(out, `step${step}-${width}.png`), fullPage: true });
     }
-    await page.click('.nb-step[data-step="3"]');
-    await waitStep(page, 3);
+    await page.click('.nb-step[data-step="4"]');
+    await waitStep(page, 4);
     const cols = await page.evaluate(() => {
       const g = document.querySelector('#preview-final').shadowRoot.querySelector('.n350-grid');
       return getComputedStyle(g).gridTemplateColumns.split(' ').length;
@@ -416,9 +416,17 @@ try {
   const dl = path.join(out, 'downloads-keyboard');
   const page = await newPage({ downloads: dl });
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'networkidle0' });
-  await tabTo(page, (f) => f.id === 'demo-link', 'sample data link');
+  // Step 1 → step 2 (the Sheet) → back to step 1, by keyboard
+  await tabTo(page, (f) => f.id === 'to-sheet-btn', 'next to the Sheet');
   await page.keyboard.press('Enter');
   await waitStep(page, 2);
+  const sheetStepFocus = await focusInfo(page);
+  await tabTo(page, (f) => f.text === 'Back', 'back to sign in');
+  await page.keyboard.press('Enter');
+  await waitStep(page, 1);
+  await tabTo(page, (f) => f.id === 'demo-link', 'sample data link');
+  await page.keyboard.press('Enter');
+  await waitStep(page, 3);
   await tabTo(page, (f) => f.id === 'inc-2', 'include checkbox');
   await page.keyboard.press('Space');
   await tabTo(page, (f) => f.id === 'feat-3', 'featured checkbox');
@@ -432,13 +440,13 @@ try {
   });
   await tabTo(page, (f) => f.text === 'Next: Final check', 'next to final check');
   await page.keyboard.press('Enter');
-  await waitStep(page, 3);
+  await waitStep(page, 4);
   await tabTo(page, (f) => f.tag === 'SUMMARY' && f.shadow, 'first tile in final preview');
   await page.keyboard.press('Enter');
   const tileOpen = await page.evaluate(() => document.querySelector('#preview-final').shadowRoot.querySelector('details').open);
   await tabTo(page, (f) => f.text === 'Next: Publish and share', 'next to publish');
   await page.keyboard.press('Enter');
-  await waitStep(page, 4);
+  await waitStep(page, 5);
   await tabTo(page, (f) => f.id === 'publish-btn', 'publish button');
   await page.keyboard.press('Enter');
   await page.waitForSelector('#confirm-dialog[open]');
@@ -454,13 +462,13 @@ try {
   await tabTo(page, (f) => f.id === 'html-btn', 'html button');
   await page.keyboard.press('Enter');
   const html = await waitForFile(dl, /\.html$/);
-  const done = arranged && tileOpen && dialogFocus.id === 'confirm-yes' && png && html && afterMove.id && afterMove.id.includes('-3');
-  record(5, 'Keyboard only: all four steps, focus always visible', done && focusProblems.length === 0,
-    (done ? 'completed load → arrange → check → publish/png/email/html with Tab/Enter/Space' : `incomplete (arranged ${arranged}, tileOpen ${tileOpen}, dialog ${dialogFocus.id}, png ${!!png}, html ${!!html}, focus after move ${afterMove.id})`) +
+  const done = sheetStepFocus.id === 'step-2-title' && arranged && tileOpen && dialogFocus.id === 'confirm-yes' && png && html && afterMove.id && afterMove.id.includes('-3');
+  record(5, 'Keyboard only: all five steps, focus always visible', done && focusProblems.length === 0,
+    (done ? 'completed sign-in page → Sheet → sample load → arrange → check → publish/png/email/html with Tab/Enter/Space' : `incomplete (arranged ${arranged}, tileOpen ${tileOpen}, dialog ${dialogFocus.id}, png ${!!png}, html ${!!html}, focus after move ${afterMove.id})`) +
     (focusProblems.length ? '; focus not visible on: ' + focusProblems.slice(0, 6).join(' | ') : '; focus ring visible on every stop'));
   await page.browserContext().close();
 } catch (e) {
-  record(5, 'Keyboard only: all four steps, focus always visible', false, String(e) + (focusProblems.length ? '; ' + focusProblems.slice(0, 5).join(' | ') : ''));
+  record(5, 'Keyboard only: all five steps, focus always visible', false, String(e) + (focusProblems.length ? '; ' + focusProblems.slice(0, 5).join(' | ') : ''));
 }
 
 // ============================================================== CHECK 7
@@ -505,17 +513,20 @@ try {
     }
   });
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'networkidle0' });
-  // Sheet panel (extra check 11): the frame shows the private Sheet link
+  // Step 1: sign in with the fake Google window
+  await page.click('#signin-btn');
+  await page.waitForFunction(() => !document.getElementById('signin-status').hidden, { timeout: 15000 });
+  const signedInText = await page.$eval('#signin-status', (e) => e.textContent);
+  const focusAfterSignIn = await page.evaluate(() => document.activeElement && document.activeElement.id);
+  // Step 2: the Sheet (extra check 11: the frame shows the private Sheet link), then load
+  await page.click('#to-sheet-btn');
+  await waitStep(page, 2);
   const sheet = await page.evaluate(() => {
     const f = document.getElementById('sheet-frame');
     return f && { src: f.getAttribute('src'), title: f.title, placeholder: !!document.getElementById('sheet-placeholder') };
   });
-  // Sign in with the fake Google window, then load
-  await page.click('#signin-btn');
-  await page.waitForFunction(() => !document.getElementById('signin-status').hidden, { timeout: 15000 });
-  const signedInText = await page.$eval('#signin-status', (e) => e.textContent);
   await page.click('#load-btn');
-  await waitStep(page, 2);
+  await waitStep(page, 3);
   const emailWarnings = await page.$$eval('#messages .nb-msg--warning', (m) => m.map((x) => x.textContent));
   const emailLeak = await page.evaluate(() => /team\.lead@|organizer@/.test(document.documentElement.outerHTML + sessionStorage.getItem('n350-arrangement')));
 
@@ -532,13 +543,13 @@ try {
   const clearMessages = () => page.evaluate(() => { document.getElementById('messages').textContent = ''; });
   async function tryPublish(m, expect) {
     mode = m;
-    await page.click('.nb-step[data-step="4"]').catch(() => {});
-    if (!(await page.$eval('#step-4', (s) => !s.hidden))) {
-      await page.click('.nb-step[data-step="3"]');
-      await waitStep(page, 3);
-      await page.click('#step-3 [data-goto="4"]');
+    await page.click('.nb-step[data-step="5"]').catch(() => {});
+    if (!(await page.$eval('#step-5', (s) => !s.hidden))) {
+      await page.click('.nb-step[data-step="4"]');
+      await waitStep(page, 4);
+      await page.click('#step-4 [data-goto="5"]');
     }
-    await waitStep(page, 4);
+    await waitStep(page, 5);
     await clearMessages();
     await page.click('#publish-btn');
     await page.waitForSelector('#confirm-dialog[open]');
@@ -546,8 +557,8 @@ try {
     await page.waitForFunction(() => document.querySelector('#messages .nb-msg--error'), { timeout: 10000 });
     const msg = await page.$eval('#messages .nb-msg--error', (e) => e.textContent);
     const same = (await page.evaluate(() => { const s = JSON.parse(sessionStorage.getItem('n350-arrangement')); return JSON.stringify([s.items, s.categories, s.excluded, s.featured]); })) === arrangement;
-    await page.click('.nb-step[data-step="2"]');
-    await waitStep(page, 2);
+    await page.click('.nb-step[data-step="3"]');
+    await waitStep(page, 3);
     const sameOrder = (await orderOf()) === order0;
     scenarios.push({ m, ok: expect.test(msg) && same && sameOrder, msg: msg.replace('Dismiss', '').trim() + (same && sameOrder ? '' : ' [arrangement changed: saved ' + same + ', order ' + sameOrder + ']') });
   }
@@ -557,8 +568,8 @@ try {
   await page.setOfflineMode(true);
   await tryPublish('offline', /offline|couldn't reach/i);
   // reloading the blurbs while offline also keeps everything
-  await page.click('.nb-step[data-step="1"]');
-  await waitStep(page, 1);
+  await page.click('.nb-step[data-step="2"]');
+  await waitStep(page, 2);
   await clearMessages();
   await page.click('#load-btn');
   await page.waitForFunction(() => document.querySelector('#messages .nb-msg--error'), { timeout: 10000 });
@@ -578,8 +589,8 @@ try {
 
   // successful publish, then look for the token everywhere
   mode = 'ok';
-  await page.click('.nb-step[data-step="4"]');
-  await waitStep(page, 4);
+  await page.click('.nb-step[data-step="5"]');
+  await waitStep(page, 5);
   await page.click('#publish-btn');
   await page.waitForSelector('#confirm-dialog[open]');
   await page.click('#confirm-yes');
@@ -612,7 +623,7 @@ try {
   const signedInOk = /^Signed in as Robin \(@350seattle\.org\)\.$/.test(signedInText);
   // after a refresh the sign-in is gone but the arrangement stays
   await page.reload({ waitUntil: 'networkidle0' });
-  await waitStep(page, 4);
+  await waitStep(page, 5);
   const afterRefresh = await page.evaluate(() => ({
     asksToSignIn: !document.getElementById('publish-signin-note').hidden,
     kept: !!sessionStorage.getItem('n350-arrangement')
@@ -632,7 +643,7 @@ try {
     `; email handling: ${emailWarnings.length} warnings shown, address leaked: ${emailLeak}`);
 
   const sheetOk = !!sheet && sheet.src === `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?rm=minimal#gid=7` &&
-    sheet.title === 'The newsletter Google Sheet' && !sheet.placeholder;
+    sheet.title === 'The newsletter Google Sheet' && !sheet.placeholder && focusAfterSignIn === 'to-sheet-btn';
   sheetResult.withUrl = sheetOk ? 'frame shows the private Sheet link' : 'frame wrong: ' + JSON.stringify(sheet);
   sheetResult.ok = sheetResult.ok && sheetOk;
   await page.browserContext().close();
@@ -648,24 +659,28 @@ try {
   // Default config: no Sheet address, no Google client ID yet.
   const page = await newPage({ width: 1280 });
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'networkidle0' });
+  await page.click('#to-sheet-btn');
+  await waitStep(page, 2);
   const placeholder = await page.evaluate(() => {
     const p = document.getElementById('sheet-placeholder');
     return !!p && p.offsetHeight > 0 && /appear here/.test(p.textContent) && !document.getElementById('sheet-frame');
   });
-  notes.push('placeholder shown: ' + placeholder);
+  notes.push('placeholder shown on step 2: ' + placeholder);
   if (!placeholder) sheetResult.ok = false;
+  await page.click('.nb-step[data-step="1"]');
+  await waitStep(page, 1);
   await page.click('#signin-btn');
   await page.waitForFunction(() => /isn't set up yet/.test(document.getElementById('messages').textContent), { timeout: 5000 });
   notes.push('"not set up" message: true');
-  // From step 2, the "Google Sheet" link jumps back to the panel.
+  // From Arrange (step 3), the "Google Sheet (step 2)" link goes back to step 2.
   await page.click('#demo-link');
+  await waitStep(page, 3);
+  await page.click('#sheet-link');
   await waitStep(page, 2);
-  await page.click('#sheet-link-2');
-  await waitStep(page, 1);
-  const panelFocused = await page.evaluate(() => document.activeElement === document.querySelector('#sheet-panel summary') && document.getElementById('sheet-panel').open);
-  notes.push('step 2 link opens the panel: ' + panelFocused);
+  const panelFocused = await page.evaluate(() => document.activeElement === document.getElementById('step-2-title'));
+  notes.push('Arrange link returns to step 2: ' + panelFocused);
   if (!panelFocused) sheetResult.ok = false;
-  await page.screenshot({ path: path.join(out, 'step1-sheet-placeholder.png'), fullPage: true });
+  await page.screenshot({ path: path.join(out, 'step2-sheet-placeholder.png'), fullPage: true });
   await page.browserContext().close();
 
   // A Google account outside 350 Seattle is turned away.
@@ -698,9 +713,9 @@ try {
   const config = { extends: 'lighthouse:default', settings: { onlyCategories: ['accessibility'] } };
   const page = await newPage({ width: 1280 });
   await page.goto(ORIGIN + '/index.html?demo=1', { waitUntil: 'networkidle0' });
-  await waitStep(page, 2);
-  await page.click('.nb-step[data-step="3"]');
   await waitStep(page, 3);
+  await page.click('.nb-step[data-step="4"]');
+  await waitStep(page, 4);
   const snap = await snapshot(page, { config, flags });
   const snapScore = Math.round(snap.lhr.categories.accessibility.score * 100);
   const snapFails = Object.values(snap.lhr.audits).filter((a) => a.score === 0 && a.scoreDisplayMode === 'binary').map((a) => a.id);

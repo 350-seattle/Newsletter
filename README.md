@@ -17,16 +17,19 @@ Want to look around first? Open **https://cody-trinkaus.github.io/NewsletterBuil
 
 ---
 
-## The four steps
+## The five steps
 
-The bar across the top shows where you are. Once blurbs are loaded you can jump between steps at any time. Your arrangement is kept if you refresh the page, but not if you close the tab.
+The bar across the top shows where you are. Steps 1 and 2 are always open; once blurbs are loaded you can jump between all five at any time. Your arrangement is kept if you refresh the page, but not if you close the tab.
 
-### 1. Load
-Click **Sign in with your 350 email**. A small Google window opens; choose your @350seattle.org account (if it doesn't open, allow pop-ups for this site). Then click **Load approved blurbs**. Only rows ticked *Approved* in the Sheet come through. You stay signed in while the tab is open, for up to an hour; after that, or after a refresh, the builder asks you to sign in again when it needs to.
+### 1. Sign in
+Click **Sign in with your 350 email**. A small Google window opens; choose your @350seattle.org account (if it doesn't open, allow pop-ups for this site). You stay signed in while the tab is open, for up to an hour; after that, or after a refresh, the builder asks you to sign in again when it needs to. Then click **Next: Review in the Sheet**.
 
-Below that is **the newsletter Google Sheet** itself, so you can review blurbs and tick *Approved* without leaving the builder. If it doesn't show or asks you to sign in, use **Open the Google Sheet in a new tab** (some browsers block Google sign-in inside other websites). Until the Sheet's address is added to `config.js`, a placeholder shows instead.
+### 2. Review in the Sheet
+**The newsletter Google Sheet** shows right inside the builder. Read through this issue's blurbs and tick *Approved* on the ones ready to go. If the Sheet doesn't show or asks you to sign in, use **Open the Google Sheet in a new tab** (some browsers block Google sign-in inside other websites). Until the Sheet's address is added to `config.js`, a placeholder shows instead.
 
-### 2. Arrange
+When you're done, click **Load approved blurbs**. Only rows ticked *Approved* come through.
+
+### 3. Arrange
 First, write **This week in summary**: a few friendly sentences about everything happening this week. It appears as an "In summary…" section under the board and at the top of the email. Leave a blank line between paragraphs. Aim for 120 words or fewer, and don't paste links or email addresses into it (put links in the items instead). If the Sheet sends a draft summary, it's filled in for you to edit. What you write is kept if you refresh or reload the blurbs.
 
 Then arrange the items. They're grouped by category (Take action, Events, and so on).
@@ -34,12 +37,12 @@ Then arrange the items. They're grouped by category (Take action, Events, and so
 - **Featured**: tick one item to make it the big first tile.
 - **Up / Down**: change the order of items, or of whole groups.
 
-The live preview shows the board as you go. To change any wording, fix it in the Google Sheet and load again; your choices are kept.
+The live preview shows the board as you go. To change any wording, fix it in the Google Sheet (step 2) and load again; your choices are kept.
 
-### 3. Final check
+### 4. Final check
 You'll see the board exactly as it will be published, a list of problems and warnings, and every link so you can click each one and make sure it works.
 
-### 4. Publish and share
+### 5. Publish and share
 Do these in order:
 - **A. Publish to website.** You'll be asked to confirm. When it's done you get the page's address and a **Copy link** button.
 - **B. Download preview image.** A picture of the board (1200 pixels wide) for the top of the email. Also copy the **image link** (make the image link to it in EveryAction) and the **alt text**.
@@ -52,14 +55,14 @@ The links include tracking tags (`utm_...`) so EveryAction and the website can s
 
 ## What the problems and warnings mean
 
-**Problems** must be fixed before you can publish. Fix them in the Google Sheet and load again, or leave that item out in step 2.
+**Problems** must be fixed before you can publish. Fix them in the Google Sheet (step 2) and load again, or leave that item out in step 3.
 
 | Problem | What to do |
 |---|---|
 | has no headline / no one-sentence summary / no link | Fill in that column in the Sheet. |
 | has a link that is not a secure web address | The link must start with `https://`. Open it in a browser and copy the address from the address bar. |
 | Two items share the id | Each Sheet row needs its own id. Ask whoever looks after the Sheet. |
-| No items are included | Tick **Include** on at least one item in step 2. |
+| No items are included | Tick **Include** on at least one item in step 3. |
 
 **Warnings** are fine to publish with, but worth a look.
 
@@ -70,7 +73,7 @@ The links include tracking tags (`utm_...`) so EveryAction and the website can s
 | has no image | It shows as a solid blue tile with the headline. That's fine; it just stands out less. |
 | has an image but no alt text | Add a short description of the picture in the Sheet so people using screen readers know what it shows. |
 | Only 1 or 2 items are included | Boards look best with at least 3. |
-| There is no weekly summary yet | Write one in step 2. Without it, the board and email skip the "In summary…" section. |
+| There is no weekly summary yet | Write one in step 3. Without it, the board and email skip the "In summary…" section. |
 | The weekly summary is more than 120 words | Try to keep it short; readers skim. |
 | The weekly summary contains a web address | Links there show as plain text and aren't tracked. Put the link on an item instead. |
 | An email address was removed | Someone put an address in a blurb. It was taken out automatically; check the wording still makes sense. |
@@ -83,7 +86,7 @@ The builder explains what happened in plain words and **never throws away your a
 - *sent back something unexpected*: try **Sign out**, then sign in again. If it keeps happening, tell whoever looks after the builder.
 - *Signing in isn't set up yet*: the one-time setup below hasn't been done. You can still use the sample data.
 - *had a problem (error 500)*: the Google side had a hiccup. Wait a minute and try again.
-- Publishing keeps failing: use **Download HTML** (step 4D) and paste it into WordPress yourself.
+- Publishing keeps failing: use **Download HTML** (step 5D) and paste it into WordPress yourself.
 
 ---
 
@@ -97,7 +100,7 @@ All settings are in `config.js`. You can edit it right on GitHub: open the file,
 | `GOOGLE_CLIENT_ID` | Turns on "Sign in with your 350 email" (see "One-time setup" below). Not a secret. Blank = sign-in not set up yet. |
 | `EMAIL_DOMAIN` | Only email addresses ending in this can sign in. Currently `350seattle.org`. |
 | `GOOGLE_AUTH_URL` | Google's sign-in address. Leave as is. |
-| `SHEET_URL` | The newsletter Google Sheet's normal address, shown in step 1. Blank = placeholder. Never a "Publish to web" link. |
+| `SHEET_URL` | The newsletter Google Sheet's normal address, shown in step 2. Blank = placeholder. Never a "Publish to web" link. |
 | `BOARD_BASE_URL` | Where newsletter issues live on the 350 website, e.g. `https://350seattle.org/newsletter/`. Only used for the email image link before you publish. |
 | `FONT_BASE_URL` | Where the board's font files are hosted. Leave it as this site's `fonts/` address. |
 | `REAL_FONTS` | Switches for the licensed brand fonts (see below). |
