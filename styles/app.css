@@ -498,6 +498,91 @@ main.nb-wrap {
   margin-top: 20px;
 }
 
+/* ---- Sign in ---- */
+.nb-signin-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.nb-signed-in {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--nb-ok-bg);
+  color: var(--nb-ok-ink);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* ---- The Google Sheet panel ---- */
+.nb-sheet {
+  margin-top: 24px;
+}
+
+.nb-sheet-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.nb-sheet-summary::-webkit-details-marker {
+  display: none;
+}
+
+.nb-sheet-summary::before {
+  content: "+";
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--nb-ocean);
+  color: var(--nb-paper);
+  font-weight: 700;
+}
+
+.nb-sheet[open] > .nb-sheet-summary::before {
+  content: "\2212";
+}
+
+.nb-sheet-summary .nb-h2 {
+  margin: 0;
+}
+
+.nb-sheet-frame {
+  display: block;
+  width: 100%;
+  height: min(75vh, 760px);
+  min-height: 420px;
+  margin: 8px 0 12px;
+  border: 1px solid #C9C6BD;
+  border-radius: 12px;
+  background: var(--nb-paper);
+}
+
+.nb-sheet-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  margin: 8px 0 4px;
+  padding: 24px;
+  border: 3px dashed var(--nb-line);
+  border-radius: 12px;
+  background: var(--nb-paper);
+  text-align: center;
+}
+
+.nb-sheet-placeholder p {
+  max-width: 52ch;
+  margin: 0 0 8px;
+}
+
 /* ---- Step 2: arrange ---- */
 .nb-arrange {
   display: grid;

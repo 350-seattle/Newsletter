@@ -7,6 +7,17 @@ window.N350_CONFIG = {
   // Leave blank to use the sample data only.
   APPS_SCRIPT_URL: '',
 
+  // Sign-in with a 350 Seattle Google account. The client ID is public
+  // (it is not a password). Leave blank until it's set up; see README,
+  // "One-time setup: signing in with 350 email".
+  GOOGLE_CLIENT_ID: '',
+
+  // Only accounts with this email domain can sign in.
+  EMAIL_DOMAIN: '350seattle.org',
+
+  // Google's sign-in address. Leave as is.
+  GOOGLE_AUTH_URL: 'https://accounts.google.com/o/oauth2/v2/auth',
+
   // The newsletter Google Sheet, shown inside the builder so you can
   // review and approve blurbs without leaving it. Paste the Sheet's
   // normal address from the browser bar, e.g.

@@ -2,8 +2,10 @@
  * Newsletter Builder: the page's behavior.
  *
  * Rules this file follows:
- * - The access token lives only in the `token` variable below. It is
- *   never written to the URL, storage, cookies, the page, or a log.
+ * - Volunteers sign in with their 350 Seattle Google account. The
+ *   proof of sign-in (Google's ID token) lives only in the `credential`
+ *   variable below. It is never written to this page's URL, storage,
+ *   cookies, the page, or a log. The Apps Script checks it with Google.
  * - The arrangement (items, order, choices) is kept in sessionStorage
  *   so a refresh doesn't lose it. Failures never clear it.
  * - Nothing is ever logged.
@@ -19,7 +21,8 @@
   var PLACEHOLDER_IMG = 'data:image/svg+xml;base64,' + btoa(
     '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="10"><rect width="8" height="10" fill="#4254B0"/></svg>');
 
-  var token = '';          // memory only
+  var credential = null;   // { idToken, name, domain, exp }, memory only
+  var pendingSignIn = null;
   var boardCss = '';       // text of styles/board.css
   var state = emptyState();
 
@@ -90,15 +93,21 @@
   }
 
   // ------------------------------------------------------------------
-  // Messages (plain English, never technical details or the token)
+  // Messages (plain English, never technical details or the sign-in)
   // ------------------------------------------------------------------
   var MSG = {
+    signInNotSetUp: 'Signing in with your 350 email isn\'t set up yet. Whoever looks after the builder needs to add the Google client ID to config.js (see README). Until then you can try the sample data.',
+    popupBlocked: 'Your browser blocked the Google sign-in window. Allow pop-ups for this site, then click "Sign in" again.',
+    signInCancelled: 'Sign-in was cancelled. Click "Sign in" to try again.',
+    signInFailed: 'Sign-in didn\'t work. Please try again.',
+    signInTimeout: 'Sign-in took too long. Click "Sign in" to try again.',
+    signInAgain: 'Your sign-in has expired. Please sign in with your 350 email again. Your arrangement has been kept.',
     notConnected: 'This builder isn\'t connected to the newsletter sheet yet. Whoever set it up needs to add the Apps Script web app address (APPS_SCRIPT_URL) to config.js. Until then you can try the sample data.',
     offline: 'You appear to be offline. Check your internet connection, then try again. Your arrangement has been kept.',
     unreachable: 'We couldn\'t reach the newsletter sheet. Check your internet connection and try again. Your arrangement has been kept.',
-    notJson: 'The newsletter sheet sent back something unexpected. This usually means the access token is wrong or has expired. Check it and try again. Your arrangement has been kept.',
+    notJson: 'The newsletter sheet sent back something unexpected. Try signing out and in again. If it keeps happening, the Apps Script address in config.js may be wrong. Your arrangement has been kept.',
     badShape: 'The newsletter sheet\'s reply was missing the information we need. Ask the person who looks after the Sheet to check it. Your arrangement has been kept.',
-    noToken: 'Please paste the access token first.'
+    wrongAccount: 'That account isn\'t a 350 Seattle email. Please sign in with your @'
   };
 
   function UserError(message) { this.message = message; }
@@ -195,6 +204,15 @@
       try { data = JSON.parse(text); } catch (e) { throw new UserError(MSG.notJson); }
       if (!data || typeof data !== 'object') throw new UserError(MSG.notJson);
       if (data.ok !== true) {
+        // The Apps Script says the sign-in is missing, expired or not
+        // allowed: forget it so the next click signs in again.
+        if (data.ok === false && data.reauth === true) {
+          credential = null;
+          updateSignInUi();
+          throw new UserError(typeof data.error === 'string' && data.error.trim()
+            ? 'The newsletter sheet said: "' + data.error.trim().slice(0, 300) + '". Please sign in again. Your arrangement has been kept.'
+            : MSG.signInAgain);
+        }
         if (data.ok === false && typeof data.error === 'string' && data.error.trim()) {
           throw new UserError('The newsletter sheet said: "' + data.error.trim().slice(0, 300) + '". Your arrangement has been kept.');
         }
@@ -281,27 +299,202 @@
     }
   }
 
-  function loadFromSheet(event) {
-    event.preventDefault();
-    var input = $('#token');
-    var typed = input.value.trim();
-    if (typed) token = typed;
-    if (!token) {
-      showMessage('error', MSG.noToken);
-      input.focus();
+  // ------------------------------------------------------------------
+  // Signing in with a 350 Seattle Google account (OpenID Connect).
+  // No Google script is loaded: a sign-in window goes to Google, Google
+  // sends the result to auth-callback.html on this site, and that page
+  // passes it back here. This page only reads the name and checks the
+  // details; the Apps Script verifies the token with Google.
+  // ------------------------------------------------------------------
+  function signInConfigured() {
+    return !!String(CONFIG.GOOGLE_CLIENT_ID || '').trim();
+  }
+
+  function emailDomain() {
+    return String(CONFIG.EMAIL_DOMAIN || '').trim().toLowerCase();
+  }
+
+  function signedIn() {
+    return !!credential && credential.exp * 1000 > Date.now() + 60000;
+  }
+
+  function randomString() {
+    var bytes = new Uint8Array(24);
+    window.crypto.getRandomValues(bytes);
+    return Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+
+  function decodeJwtPayload(jwt) {
+    var parts = String(jwt).split('.');
+    if (parts.length !== 3) return null;
+    try {
+      var b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4) b64 += '=';
+      var bin = atob(b64);
+      var pct = Array.prototype.map.call(bin, function (c) { return '%' + ('0' + c.charCodeAt(0).toString(16)).slice(-2); }).join('');
+      return JSON.parse(decodeURIComponent(pct));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Call straight from a click, so the browser allows the window.
+  function signIn() {
+    if (!signInConfigured()) return Promise.reject(new UserError(MSG.signInNotSetUp));
+    var stateParam = randomString();
+    var nonce = randomString();
+    var url;
+    try {
+      url = new URL(String(CONFIG.GOOGLE_AUTH_URL || 'https://accounts.google.com/o/oauth2/v2/auth'));
+    } catch (e) {
+      return Promise.reject(new UserError(MSG.signInNotSetUp));
+    }
+    var q = url.searchParams;
+    q.set('client_id', String(CONFIG.GOOGLE_CLIENT_ID).trim());
+    q.set('redirect_uri', new URL('auth-callback.html', window.location.href).toString());
+    q.set('response_type', 'id_token');
+    q.set('scope', 'openid email profile');
+    q.set('nonce', nonce);
+    q.set('state', stateParam);
+    q.set('prompt', 'select_account');
+    if (emailDomain()) q.set('hd', emailDomain());
+
+    var popup = window.open(url.toString(), 'n350-signin', 'popup,width=520,height=680');
+    if (!popup) return Promise.reject(new UserError(MSG.popupBlocked));
+    return new Promise(function (resolve, reject) {
+      if (pendingSignIn) window.clearTimeout(pendingSignIn.timer);
+      pendingSignIn = {
+        state: stateParam,
+        nonce: nonce,
+        resolve: resolve,
+        reject: reject,
+        timer: window.setTimeout(function () { finishSignIn(new UserError(MSG.signInTimeout)); }, 5 * 60 * 1000)
+      };
+      updateSignInUi();
+    });
+  }
+
+  function finishSignIn(error, cred) {
+    var p = pendingSignIn;
+    if (!p) return;
+    pendingSignIn = null;
+    window.clearTimeout(p.timer);
+    if (error) {
+      p.reject(error);
+    } else {
+      credential = cred;
+      p.resolve(cred);
+    }
+    updateSignInUi();
+  }
+
+  function onAuthMessage(data) {
+    if (!pendingSignIn || !data || data.type !== 'n350-auth' || data.state !== pendingSignIn.state) return;
+    if (data.error || !data.idToken) {
+      finishSignIn(new UserError(data.error === 'access_denied' ? MSG.signInCancelled : MSG.signInFailed));
       return;
     }
+    var claims = decodeJwtPayload(data.idToken);
+    if (!claims || claims.nonce !== pendingSignIn.nonce ||
+        claims.aud !== String(CONFIG.GOOGLE_CLIENT_ID).trim() ||
+        !(Number(claims.exp) * 1000 > Date.now())) {
+      finishSignIn(new UserError(MSG.signInFailed));
+      return;
+    }
+    var email = String(claims.email || '').toLowerCase();
+    var domain = emailDomain();
+    var verified = claims.email_verified === true || claims.email_verified === 'true';
+    if (!verified || (domain && email.slice(-(domain.length + 1)) !== '@' + domain)) {
+      finishSignIn(new UserError(MSG.wrongAccount + (domain || '350') + ' account.'));
+      return;
+    }
+    finishSignIn(null, {
+      idToken: data.idToken,
+      name: String(claims.given_name || claims.name || 'you').slice(0, 60),
+      domain: email.split('@')[1] || domain,
+      exp: Number(claims.exp)
+    });
+  }
+
+  function listenForSignIn() {
+    window.addEventListener('message', function (event) {
+      if (event.origin === window.location.origin) onAuthMessage(event.data);
+    });
+    try {
+      var channel = new BroadcastChannel('n350-auth');
+      channel.onmessage = function (event) { onAuthMessage(event.data); };
+    } catch (e) { /* older browser: the window message still works */ }
+  }
+
+  function signOut() {
+    credential = null;
+    updateSignInUi();
+    announce('Signed out.');
+    $('#signin-btn').focus();
+  }
+
+  function onSignInClick() {
+    var btn = $('#signin-btn');
+    if (btn.getAttribute('aria-disabled') === 'true') {
+      showMessage('error', MSG.signInNotSetUp);
+      return;
+    }
+    signIn().then(function () {
+      announce('Signed in.');
+      $('#load-btn').focus();
+    }).catch(function (err) {
+      showMessage('error', asUserError(err));
+    });
+  }
+
+  function updateSignInUi() {
+    var help = $('#signin-help');
+    var status = $('#signin-status');
+    var btn = $('#signin-btn');
+    var out = $('#signout-btn');
+    var domain = emailDomain();
+    if (!signInConfigured()) {
+      help.textContent = MSG.signInNotSetUp;
+      btn.setAttribute('aria-disabled', 'true');
+      btn.hidden = false;
+      status.hidden = true;
+      out.hidden = true;
+    } else if (signedIn()) {
+      btn.removeAttribute('aria-disabled');
+      status.textContent = 'Signed in as ' + credential.name + ' (@' + credential.domain + ').';
+      status.hidden = false;
+      help.textContent = 'You stay signed in while this tab is open, for up to an hour. Nothing about your account is saved.';
+      btn.hidden = true;
+      out.hidden = false;
+    } else {
+      btn.removeAttribute('aria-disabled');
+      status.hidden = true;
+      out.hidden = true;
+      btn.hidden = false;
+      btn.textContent = pendingSignIn ? 'Open the sign-in window again' : 'Sign in with your 350 email';
+      help.textContent = pendingSignIn
+        ? 'Finish signing in in the Google window that opened.'
+        : 'Use your @' + (domain || '350') + ' Google account. Nothing about your account is saved.';
+    }
+    var note = $('#publish-signin-note');
+    if (note) note.hidden = state.demo || signedIn();
+  }
+
+  function loadFromSheet() {
     var btn = $('#load-btn');
-    setBusy(btn, true, 'Loading…');
-    callScript({ action: 'items', token: token }).then(function (data) {
-      acceptData(data, false);
-      input.value = '';
-      afterLoad();
+    if (btn.dataset.busy) return;
+    var ready = signedIn() ? Promise.resolve() : signIn();
+    ready.then(function () {
+      setBusy(btn, true, 'Loading…');
+      return callScript({ action: 'items', idToken: credential.idToken }).then(function (data) {
+        acceptData(data, false);
+        afterLoad();
+      });
     }).catch(function (err) {
       showMessage('error', asUserError(err));
     }).then(function () {
-      setBusy(btn, false);
-      updateTokenUi();
+      if (btn.dataset.busy) setBusy(btn, false);
+      updateSignInUi();
     });
   }
 
@@ -667,7 +860,7 @@
       publishBtn.removeAttribute('aria-disabled');
       note.textContent = 'Sends the board to the WordPress site as the post for ' + (state.issue.title || 'this issue') + '. You\'ll be asked to confirm first.';
     }
-    $('#publish-token-wrap').hidden = state.demo || !!token;
+    $('#publish-signin-note').hidden = state.demo || signedIn();
 
     if (state.publishedUrl) {
       $('#publish-result').hidden = false;
@@ -688,16 +881,16 @@
       if (!btn.dataset.busy) showMessage('error', 'Publishing is turned off until the problems in step 3 are fixed.');
       return;
     }
-    if (!state.demo && !token) {
-      var typed = $('#publish-token').value.trim();
-      if (!typed) {
-        showMessage('error', MSG.noToken);
-        $('#publish-token').focus();
-        return;
-      }
-      token = typed;
-      $('#publish-token').value = '';
+    if (!state.demo && !signedIn()) {
+      signIn().then(openPublishDialog).catch(function (err) {
+        showMessage('error', asUserError(err));
+      });
+      return;
     }
+    openPublishDialog();
+  }
+
+  function openPublishDialog() {
     var dialog = $('#confirm-dialog');
     $('#confirm-body').textContent = state.demo
       ? 'This is sample mode, so nothing will actually be published. Continue to see what happens after publishing?'
@@ -724,10 +917,15 @@
       $('#published-url').focus();
       return;
     }
+    if (!signedIn()) {
+      showMessage('error', MSG.signInAgain);
+      updateSignInUi();
+      return;
+    }
     setBusy(btn, true, 'Publishing…');
     callScript({
       action: 'publish',
-      token: token,
+      idToken: credential.idToken,
       slug: state.issue.slug,
       title: state.issue.title,
       html: fragment
@@ -945,7 +1143,7 @@
     if (n === 2) { fillRecap(); renderArrangeList(); renderPreview('#preview-arrange', false); }
     if (n === 3) renderCheck();
     if (n === 4) renderShare();
-    if (n === 1) updateTokenUi();
+    if (n === 1) { updateSignInUi(); loadSheetFrame(); }
     renderSteps();
     if (opts.focus !== false) {
       var h = $('#step-' + n + '-title');
@@ -954,8 +1152,74 @@
     }
   }
 
-  function updateTokenUi() {
-    $('#token-held').hidden = !token;
+  // ------------------------------------------------------------------
+  // The newsletter Google Sheet, shown in step 1. The builder never
+  // reads it: Google shows it inside the frame only to people the Sheet
+  // is shared with.
+  // ------------------------------------------------------------------
+  var SHEET_PLACEHOLDER = {
+    missing: 'Once the newsletter Sheet is set up, add its address to config.js (SHEET_URL) and it will show here, so you can review and approve blurbs without leaving the builder.',
+    published: 'The Sheet address in config.js is a "Publish to web" link, which makes the whole Sheet public, including submitters\' email addresses. Use the Sheet\'s normal address instead, and in Google Sheets choose File → Share → Publish to web → Stop publishing.',
+    'not-a-sheet': 'The Sheet address in config.js doesn\'t look like a Google Sheets link. It should start with https://docs.google.com/spreadsheets/d/'
+  };
+
+  function renderSheetPanel() {
+    var body = $('#sheet-body');
+    var link = $('#sheet-link-2');
+    var links = N350.sheetLinks(CONFIG.SHEET_URL);
+    body.textContent = '';
+    if (links.ok) {
+      body.appendChild(el('iframe', {
+        className: 'nb-sheet-frame',
+        id: 'sheet-frame',
+        title: 'The newsletter Google Sheet',
+        'data-src': links.embedUrl,
+        referrerpolicy: 'no-referrer',
+        allow: 'clipboard-read; clipboard-write'
+      }));
+      body.appendChild(el('p', { className: 'nb-help' }, [
+        'Sheet not showing, or asking you to sign in? ',
+        el('a', { href: links.openUrl, target: '_blank', rel: 'noopener noreferrer' }, [
+          'Open the Google Sheet in a new tab',
+          el('span', { className: 'nb-sr', text: ' (opens in a new tab)' })
+        ]),
+        '. Some browsers block Google sign-in inside other websites.'
+      ]));
+      link.href = links.openUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = 'Google Sheet';
+      link.appendChild(el('span', { className: 'nb-sr', text: ' (opens in a new tab)' }));
+    } else {
+      body.appendChild(el('div', { className: 'nb-sheet-placeholder', id: 'sheet-placeholder' }, [
+        el('div', {}, [
+          el('p', { className: 'nb-h3', text: 'The Google Sheet will appear here' }),
+          el('p', { text: SHEET_PLACEHOLDER[links.reason] || SHEET_PLACEHOLDER.missing })
+        ])
+      ]));
+      link.href = '#sheet-panel';
+      link.removeAttribute('target');
+      link.removeAttribute('rel');
+    }
+  }
+
+  // The frame only loads when step 1 is showing and the panel is open.
+  function loadSheetFrame() {
+    var frame = $('#sheet-frame');
+    if (frame && !frame.getAttribute('src') && $('#sheet-panel').open && !$('#step-1').hidden) {
+      frame.setAttribute('src', frame.getAttribute('data-src'));
+    }
+  }
+
+  function onSheetLink(event) {
+    var link = event.currentTarget;
+    if (link.getAttribute('href') !== '#sheet-panel') return; // real Sheet link: opens a new tab
+    event.preventDefault();
+    var panel = $('#sheet-panel');
+    panel.open = true;
+    goTo(1, { focus: false });
+    panel.scrollIntoView();
+    panel.querySelector('summary').focus();
   }
 
   function renderAll() {
@@ -970,7 +1234,7 @@
   function startOver() {
     if (hasData() && !window.confirm('Start over? This clears the current arrangement in this tab. Nothing on the website changes.')) return;
     try { sessionStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
-    token = '';
+    credential = null;
     state = emptyState();
     $('#week-summary').value = '';
     ['#preview-arrange', '#preview-final'].forEach(function (s) {
@@ -993,7 +1257,14 @@
   // Start up
   // ------------------------------------------------------------------
   function wire() {
-    $('#load-form').addEventListener('submit', loadFromSheet);
+    $('#load-btn').addEventListener('click', loadFromSheet);
+    $('#signin-btn').addEventListener('click', onSignInClick);
+    $('#signout-btn').addEventListener('click', signOut);
+    $('#sheet-panel').addEventListener('toggle', loadSheetFrame);
+    $('#sheet-link-2').addEventListener('click', onSheetLink);
+    listenForSignIn();
+    renderSheetPanel();
+    updateSignInUi();
     $('#demo-link').addEventListener('click', onDemoLink);
     $('#start-over').addEventListener('click', startOver);
     $all('.nb-step').forEach(function (btn) {

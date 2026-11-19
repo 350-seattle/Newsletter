@@ -46,23 +46,32 @@
     <!-- Step 1 -->
     <section class="nb-step-panel" id="step-1" data-step="1" aria-labelledby="step-1-title">
       <h1 class="nb-title" id="step-1-title" tabindex="-1">Load this issue's blurbs</h1>
-      <p class="nb-lede">Paste the access token from the newsletter coordinator, then load the blurbs that were approved in the Google Sheet.</p>
+      <p class="nb-lede">Sign in with your 350 Seattle email, then load the blurbs that were approved in the Google Sheet.</p>
 
-      <form id="load-form" class="nb-card nb-load" method="post" action="#" autocomplete="off" novalidate>
-        <label class="nb-label" for="token">Access token</label>
-        <p class="nb-help" id="token-help">It's kept only while this tab is open and is never saved. You'll need it again if you refresh the page.</p>
-        <input class="nb-input" id="token" name="token" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="token-help">
-        <p class="nb-help nb-token-held" id="token-held" hidden>A token is already in use for this tab.</p>
-        <button type="submit" class="nb-btn" id="load-btn">Load approved blurbs</button>
-      </form>
+      <section class="nb-card nb-load" aria-labelledby="signin-title">
+        <h2 class="nb-h2" id="signin-title">Sign in</h2>
+        <p class="nb-help" id="signin-help"></p>
+        <p class="nb-signed-in" id="signin-status" role="status" hidden></p>
+        <div class="nb-signin-row">
+          <button type="button" class="nb-btn" id="signin-btn">Sign in with your 350 email</button>
+          <button type="button" class="nb-btn nb-btn--secondary" id="signout-btn" hidden>Sign out</button>
+        </div>
+        <button type="button" class="nb-btn" id="load-btn">Load approved blurbs</button>
+      </section>
 
-      <p class="nb-demo">No access token, or just looking around? <a id="demo-link" href="?demo=1">Try with sample data</a></p>
+      <p class="nb-demo">No 350 account, or just looking around? <a id="demo-link" href="?demo=1">Try with sample data</a></p>
+
+      <details class="nb-card nb-sheet" id="sheet-panel" open>
+        <summary class="nb-sheet-summary"><span class="nb-h2">The newsletter Google Sheet</span></summary>
+        <p class="nb-help">Review the blurbs and tick <strong>Approved</strong> on the ones ready to go, then load them above.</p>
+        <div id="sheet-body"></div>
+      </details>
     </section>
 
     <!-- Step 2 -->
     <section class="nb-step-panel" id="step-2" data-step="2" aria-labelledby="step-2-title" hidden>
       <h1 class="nb-title" id="step-2-title" tabindex="-1">Arrange the board</h1>
-      <p class="nb-lede">Choose which items to include, put them in order, and pick one to feature. The preview updates as you go. To change the wording, edit the Google Sheet and load again.</p>
+      <p class="nb-lede">Choose which items to include, put them in order, and pick one to feature. The preview updates as you go. To change the wording, edit the <a id="sheet-link-2" href="#sheet-panel">Google Sheet</a> and load again.</p>
 
       <div class="nb-arrange">
         <div class="nb-arrange-col">
@@ -117,11 +126,7 @@
         <section class="nb-card" aria-labelledby="publish-title">
           <h2 class="nb-h2" id="publish-title"><span class="nb-letter" aria-hidden="true">A</span> Publish to website</h2>
           <p class="nb-help" id="publish-note"></p>
-          <div id="publish-token-wrap" hidden>
-            <label class="nb-label" for="publish-token">Access token</label>
-            <p class="nb-help" id="publish-token-help">Needed to publish. It's kept only while this tab is open.</p>
-            <input class="nb-input" id="publish-token" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" aria-describedby="publish-token-help">
-          </div>
+          <p class="nb-help" id="publish-signin-note" hidden>You'll be asked to sign in with your 350 email first.</p>
           <button type="button" class="nb-btn" id="publish-btn">Publish to website…</button>
           <div id="publish-result" class="nb-result" hidden>
             <label class="nb-label" for="published-url">The board is published at</label>
