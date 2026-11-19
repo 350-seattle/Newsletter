@@ -33,6 +33,13 @@ The volunteer writes "everything happening this week" in the builder.
 - [x] index.html/app.js: textarea in step 2 above the arrange list (static, not rebuilt), live word count, saved in sessionStorage as `state.weekSummary`; optional prefill from `issue.weekSummary` in the Apps Script reply
 - [x] tests (28 unit; e2e check 1 types, refreshes, checks preview/email/download), README, dist rebuild, commit
 
+### In progress: Google Sheet panel (requested 2026-11-19)
+Embed the submissions Sheet in the builder so the volunteer can review/approve without leaving it. No Sheet login yet, so it must work as a placeholder.
+- [ ] config.js `SHEET_URL` (blank = placeholder). Only normal private links (`/spreadsheets/d/<id>/...`); refuse "Publish to web" links (`/d/e/`, `pubhtml`) because they make the whole Sheet, including submitter emails, public
+- [ ] render-board.js `sheetLinks(url)`: pure, returns embed src (`/edit?rm=minimal`, keeps `#gid`) + open-in-new-tab link, or a reason
+- [ ] index.html/app.js/app.css: collapsible panel in step 1 under the load form (iframe loads only when opened); placeholder box when unset; "Open the Google Sheet" link in step 2 text
+- [ ] tests: unit for sheetLinks; e2e extra check (placeholder; iframe src/title with a faked SHEET_URL); README; commit
+
 ## Last known results (browser checks)
 
 All 10 PASS (Lighthouse a11y 100/100 on the preview and the published board)
