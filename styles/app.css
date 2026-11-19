@@ -65,6 +65,12 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Elements marked hidden stay hidden even if a class gives them a
+   display (for example buttons, which are inline-flex). */
+[hidden] {
+  display: none !important;
+}
+
 body.nb-app {
   margin: 0;
   background: var(--nb-foggy);

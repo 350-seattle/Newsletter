@@ -676,7 +676,9 @@ try {
   await p2.goto(ORIGIN + '/index.html', { waitUntil: 'networkidle0' });
   await p2.click('#signin-btn');
   await p2.waitForFunction(() => /isn't a 350 Seattle email/.test(document.getElementById('messages').textContent), { timeout: 15000 });
-  const stillOut = await p2.evaluate(() => document.getElementById('signin-status').hidden);
+  // Signed out and not in sample mode: no status, no Sign out button, no badge on screen.
+  const stillOut = await p2.evaluate(() => ['signin-status', 'signout-btn', 'sample-badge']
+    .every((id) => document.getElementById(id).getBoundingClientRect().height === 0));
   const wrong = stillOut && fakeAuth.issued.length === before + 1 && p2.requests.length === 0;
   notes.push('non-350 account refused: ' + wrong);
   await p2.screenshot({ path: path.join(out, 'step1-sheet-frame.png'), fullPage: true });

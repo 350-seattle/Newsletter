@@ -4,7 +4,7 @@ A small website for 350 Seattle volunteers. It takes the newsletter blurbs that 
 
 You don't need to install anything or know any code to use it.
 
-- **No passwords live here.** The builder never sees the WordPress password. You paste an *access token* (ask the newsletter coordinator), and it's forgotten when you close or refresh the tab.
+- **No passwords live here.** The builder never sees the WordPress password or your Google password. You sign in with your **350 Seattle email** through Google's own sign-in window, and the builder forgets the sign-in when you close or refresh the tab.
 - **No email addresses are shown or published.** If one turns up in a blurb, the builder removes it and tells you.
 
 ---
@@ -22,7 +22,9 @@ Want to look around first? Open **https://cody-trinkaus.github.io/NewsletterBuil
 The bar across the top shows where you are. Once blurbs are loaded you can jump between steps at any time. Your arrangement is kept if you refresh the page, but not if you close the tab.
 
 ### 1. Load
-Paste the access token and click **Load approved blurbs**. Only rows ticked *Approved* in the Sheet come through.
+Click **Sign in with your 350 email**. A small Google window opens; choose your @350seattle.org account (if it doesn't open, allow pop-ups for this site). Then click **Load approved blurbs**. Only rows ticked *Approved* in the Sheet come through. You stay signed in while the tab is open, for up to an hour; after that, or after a refresh, the builder asks you to sign in again when it needs to.
+
+Below that is **the newsletter Google Sheet** itself, so you can review blurbs and tick *Approved* without leaving the builder. If it doesn't show or asks you to sign in, use **Open the Google Sheet in a new tab** (some browsers block Google sign-in inside other websites). Until the Sheet's address is added to `config.js`, a placeholder shows instead.
 
 ### 2. Arrange
 First, write **This week in summary**: a few friendly sentences about everything happening this week. It appears as an "In summary…" section under the board and at the top of the email. Leave a blank line between paragraphs. Aim for 120 words or fewer, and don't paste links or email addresses into it (put links in the items instead). If the Sheet sends a draft summary, it's filled in for you to edit. What you write is kept if you refresh or reload the blurbs.
@@ -76,7 +78,10 @@ The links include tracking tags (`utm_...`) so EveryAction and the website can s
 ### If something goes wrong
 The builder explains what happened in plain words and **never throws away your arrangement**. Common messages:
 - *You appear to be offline* / *couldn't reach the newsletter sheet*: check your internet connection and try again.
-- *sent back something unexpected*: usually the access token is wrong or has expired. Ask the coordinator for a fresh one.
+- *That account isn't a 350 Seattle email*: sign in again and pick your @350seattle.org account.
+- *Your sign-in has expired*: click **Sign in** again; nothing else is lost.
+- *sent back something unexpected*: try **Sign out**, then sign in again. If it keeps happening, tell whoever looks after the builder.
+- *Signing in isn't set up yet*: the one-time setup below hasn't been done. You can still use the sample data.
 - *had a problem (error 500)*: the Google side had a hiccup. Wait a minute and try again.
 - Publishing keeps failing: use **Download HTML** (step 4D) and paste it into WordPress yourself.
 
@@ -89,6 +94,10 @@ All settings are in `config.js`. You can edit it right on GitHub: open the file,
 | Setting | What it is |
 |---|---|
 | `APPS_SCRIPT_URL` | The address of the Google Apps Script web app (ends in `/exec`). Leave it blank to use sample data only. |
+| `GOOGLE_CLIENT_ID` | Turns on "Sign in with your 350 email" (see "One-time setup" below). Not a secret. Blank = sign-in not set up yet. |
+| `EMAIL_DOMAIN` | Only email addresses ending in this can sign in. Currently `350seattle.org`. |
+| `GOOGLE_AUTH_URL` | Google's sign-in address. Leave as is. |
+| `SHEET_URL` | The newsletter Google Sheet's normal address, shown in step 1. Blank = placeholder. Never a "Publish to web" link. |
 | `BOARD_BASE_URL` | Where newsletter issues live on the 350 website, e.g. `https://350seattle.org/newsletter/`. Only used for the email image link before you publish. |
 | `FONT_BASE_URL` | Where the board's font files are hosted. Leave it as this site's `fonts/` address. |
 | `REAL_FONTS` | Switches for the licensed brand fonts (see below). |
@@ -144,7 +153,46 @@ Plain HTML, CSS and JavaScript: no framework, no build step, nothing loaded from
 | `tests/` | Unit tests and browser acceptance checks |
 | `reference/` | The process book, workflow deck, brand guide and images this is based on |
 
-**The Apps Script contract:** every call is a `POST` to `APPS_SCRIPT_URL` with `Content-Type: text/plain` and a JSON body that includes the token. `{"action":"items"}` returns `{ok, issue, items}` (`issue.weekSummary` is optional; if present it pre-fills the weekly summary box); `{"action":"publish", slug, title, html}` returns `{ok, url, postId}`. On failure: `{ok:false, error}`.
+**The Apps Script contract:** every call is a `POST` to `APPS_SCRIPT_URL` with `Content-Type: text/plain` and a JSON body that includes `idToken`, the volunteer's Google ID token. `{"action":"items", idToken}` returns `{ok, issue, items}` (`issue.weekSummary` is optional; if present it pre-fills the weekly summary box); `{"action":"publish", idToken, slug, title, html}` returns `{ok, url, postId}`. On failure: `{ok:false, error}`. If the sign-in is missing, expired or not allowed, return `{ok:false, error:"...", reauth:true}` and the builder asks the volunteer to sign in again.
+
+**The Apps Script must verify every `idToken` with Google.** The builder only reads the name from it; anyone could send a made-up one. A minimal check:
+
+```js
+var CLIENT_ID = 'the same value as GOOGLE_CLIENT_ID in config.js';
+var DOMAIN = '350seattle.org';
+
+function checkSignIn_(idToken) {
+  var res = UrlFetchApp.fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken || ''),
+    { muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw { reauth: true, error: 'Please sign in again.' };
+  var c = JSON.parse(res.getContentText());       // Google has checked the signature and expiry
+  var email = String(c.email || '').toLowerCase();
+  if (c.aud !== CLIENT_ID || String(c.email_verified) !== 'true' || c.hd !== DOMAIN || !/@350seattle\.org$/.test(email)) {
+    throw { reauth: true, error: 'Please sign in with your 350 Seattle email.' };
+  }
+  return email;  // optionally also check it against a list of newsletter volunteers
+}
+```
+
+Never log the `idToken`, and never send a submitter's email back to the builder.
+
+### One-time setup: signing in with 350 email
+
+Needs someone with access to 350 Seattle's Google Workspace (about 10 minutes).
+
+1. Go to https://console.cloud.google.com/ while signed in with a 350 account, and create a project (e.g. "Newsletter Builder").
+2. **APIs & Services → OAuth consent screen**: choose **Internal** (only 350 accounts can sign in), app name "350 Newsletter Builder", and the scopes `openid`, `email`, `profile`.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID**, type **Web application**:
+   - **Authorized JavaScript origins**: `https://cody-trinkaus.github.io` (and `http://localhost:8000` for testing).
+   - **Authorized redirect URIs**: `https://cody-trinkaus.github.io/NewsletterBuilder/auth-callback.html` (and `http://localhost:8000/auth-callback.html`).
+4. Copy the **Client ID** (it ends in `.apps.googleusercontent.com`; it is not a secret) into `config.js` as `GOOGLE_CLIENT_ID`, and into the Apps Script as `CLIENT_ID`.
+5. Check `EMAIL_DOMAIN` in `config.js` matches 350's email domain.
+
+The builder loads no Google script: the sign-in window goes straight to Google, and Google sends the result to `auth-callback.html` on this site, which hands it back to the builder tab and closes.
+
+### The Google Sheet panel
+
+Set `SHEET_URL` in `config.js` to the Sheet's normal address (from the browser bar). The builder never reads the Sheet; Google shows it inside the panel only to people the Sheet is shared with. Keep the Sheet's sharing **Restricted** (not "Anyone with the link"), and never use **File → Share → Publish to web**: that makes everything public, including submitters' email addresses. The builder refuses "Publish to web" links. Remember that the Sheet itself contains submitters' contact emails, so only share it with the newsletter volunteers.
 
 ### Running it on your own computer
 
