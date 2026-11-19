@@ -497,7 +497,33 @@
       (heads.length ? ': ' + heads.join('; ') : '') + '. Click to read the full board.';
   }
 
+  /*
+   * Turns the Google Sheet address from config.js into the address used
+   * inside the builder and an "open in a new tab" address.
+   * Only private Sheet links are accepted. "Publish to web" links are
+   * refused: they make the whole Sheet, submitter emails included,
+   * readable by anyone on the internet.
+   *   -> { ok: true, id, embedUrl, openUrl } or { ok: false, reason }
+   *      reason: 'missing' | 'not-a-sheet' | 'published'
+   */
+  function sheetLinks(url) {
+    var raw = String(url == null ? '' : url).trim();
+    if (!raw) return { ok: false, reason: 'missing' };
+    var u = parseUrl(raw);
+    if (!u || u.protocol !== 'https:' || u.hostname !== 'docs.google.com') return { ok: false, reason: 'not-a-sheet' };
+    if (/^\/spreadsheets\/d\/e\//.test(u.pathname) || /\/pub(html)?\/?$/.test(u.pathname)) {
+      return { ok: false, reason: 'published' };
+    }
+    var m = /^\/spreadsheets(?:\/u\/\d+)?\/d\/([A-Za-z0-9_-]{20,})(?:\/|$)/.exec(u.pathname);
+    if (!m) return { ok: false, reason: 'not-a-sheet' };
+    var gid = /(?:^|[#&?])gid=(\d+)/.exec(u.hash + '&' + u.search);
+    var base = 'https://docs.google.com/spreadsheets/d/' + m[1] + '/edit';
+    var tab = gid ? '#gid=' + gid[1] : '';
+    return { ok: true, id: m[1], embedUrl: base + '?rm=minimal' + tab, openUrl: base + tab };
+  }
+
   return {
+    sheetLinks: sheetLinks,
     render: render,
     processCss: processCss,
     fontFaceRules: fontFaceRules,

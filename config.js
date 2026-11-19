@@ -7,6 +7,14 @@ window.N350_CONFIG = {
   // Leave blank to use the sample data only.
   APPS_SCRIPT_URL: '',
 
+  // The newsletter Google Sheet, shown inside the builder so you can
+  // review and approve blurbs without leaving it. Paste the Sheet's
+  // normal address from the browser bar, e.g.
+  //   https://docs.google.com/spreadsheets/d/1AbC.../edit#gid=0
+  // Leave blank to show a placeholder. Do NOT use a "Publish to web"
+  // link: that makes the whole Sheet, emails included, public.
+  SHEET_URL: '',
+
   // Where published issues live on the WordPress site. The issue slug is
   // added to the end, e.g. https://350seattle.org/newsletter/2026-12/
   // Only used for the email image link before you publish; after

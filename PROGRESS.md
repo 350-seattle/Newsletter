@@ -40,6 +40,14 @@ Embed the submissions Sheet in the builder so the volunteer can review/approve w
 - [ ] index.html/app.js/app.css: collapsible panel in step 1 under the load form (iframe loads only when opened); placeholder box when unset; "Open the Google Sheet" link in step 2 text
 - [ ] tests: unit for sheetLinks; e2e extra check (placeholder; iframe src/title with a faked SHEET_URL); README; commit
 
+### In progress: sign in with 350 email instead of access token (requested 2026-11-19)
+Replaces the pasted token everywhere.
+- [ ] Google OpenID sign-in without any Google script (no-CDN rule): popup to `GOOGLE_AUTH_URL` with `response_type=id_token`, `hd=EMAIL_DOMAIN`, random `state` + `nonce`; `auth-callback.html/.js` (same origin) sends the result back via BroadcastChannel + opener.postMessage, clears its own URL, closes
+- [ ] app.js: credential `{idToken, name, domain, exp}` in memory only; checks state, nonce, aud, exp, email domain (UX only; server must verify); requests send `idToken` instead of `token`; sign in again when expired; sign out button; popup-blocked and wrong-account messages
+- [ ] config.js: `GOOGLE_CLIENT_ID` (blank = sign-in not set up yet), `EMAIL_DOMAIN` ('350seattle.org', assumed), `GOOGLE_AUTH_URL` (tests override)
+- [ ] README: volunteer wording; one-time Google Cloud setup (OAuth client, origins, redirect URIs); Apps Script must verify the ID token via tokeninfo (aud, email_verified, hd)
+- [ ] tests: app-safety (no credential in storage/URL/log), e2e fake Google sign-in endpoint on the test server; checks 8/9 use sign-in; wrong-domain test
+
 ## Last known results (browser checks)
 
 All 10 PASS (Lighthouse a11y 100/100 on the preview and the published board)
