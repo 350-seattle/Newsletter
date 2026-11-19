@@ -683,6 +683,39 @@ try {
   await page.screenshot({ path: path.join(out, 'step2-sheet-placeholder.png'), fullPage: true });
   await page.browserContext().close();
 
+  // With a Sheet address set, the Sheet stays locked until sign-in.
+  const p1 = await newPage({ mock: () => ({ body: JSON.stringify({ ok: false, error: 'not used' }) }) });
+  await p1.goto(ORIGIN + '/index.html', { waitUntil: 'networkidle0' });
+  await p1.click('#to-sheet-btn');
+  await waitStep(p1, 2);
+  await sleep(300);
+  const sheetState = () => p1.evaluate(() => ({
+    locked: !!document.getElementById('sheet-locked') && document.getElementById('sheet-locked').offsetHeight > 0,
+    frame: !!document.getElementById('sheet-frame'),
+    src: document.getElementById('sheet-frame') && document.getElementById('sheet-frame').getAttribute('src'),
+    sheetInPage: /docs\.google\.com\/spreadsheets/.test(document.body.innerHTML)
+  }));
+  const signedOut = await sheetState();
+  const noRequestBefore = !(p1.sheetRequests || []).length;
+  await p1.screenshot({ path: path.join(out, 'step2-sheet-locked.png'), fullPage: true });
+  await p1.click('#sheet-signin-btn');
+  await p1.waitForFunction(() => { const f = document.getElementById('sheet-frame'); return f && f.getAttribute('src'); }, { timeout: 15000 });
+  const signedInState = await sheetState();
+  const focusAfter = await p1.evaluate(() => document.activeElement && document.activeElement.id);
+  await p1.click('.nb-step[data-step="1"]');
+  await waitStep(p1, 1);
+  await p1.click('#signout-btn');
+  await p1.click('.nb-step[data-step="2"]');
+  await waitStep(p1, 2);
+  const afterSignOut = await sheetState();
+  const lockOk = signedOut.locked && !signedOut.frame && !signedOut.sheetInPage && noRequestBefore &&
+    !signedInState.locked && /rm=minimal/.test(signedInState.src || '') && focusAfter === 'step-2-title' &&
+    afterSignOut.locked && !afterSignOut.frame && !afterSignOut.sheetInPage;
+  notes.push('Sheet locked until sign-in, then shown, then locked again on sign out: ' + lockOk +
+    (lockOk ? '' : ' ' + JSON.stringify({ signedOut, noRequestBefore, signedInState, focusAfter, afterSignOut })));
+  if (!lockOk) sheetResult.ok = false;
+  await p1.browserContext().close();
+
   // A Google account outside 350 Seattle is turned away.
   fakeAuth.email = 'someone@gmail.com';
   fakeAuth.hd = null;

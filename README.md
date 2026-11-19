@@ -25,7 +25,7 @@ The bar across the top shows where you are. Steps 1 and 2 are always open; once 
 Click **Sign in with your 350 email**. A small Google window opens; choose your @350seattle.org account (if it doesn't open, allow pop-ups for this site). You stay signed in while the tab is open, for up to an hour; after that, or after a refresh, the builder asks you to sign in again when it needs to. Then click **Next: Review in the Sheet**.
 
 ### 2. Review in the Sheet
-**The newsletter Google Sheet** shows right inside the builder. Read through this issue's blurbs and tick *Approved* on the ones ready to go. If the Sheet doesn't show or asks you to sign in, use **Open the Google Sheet in a new tab** (some browsers block Google sign-in inside other websites). Until the Sheet's address is added to `config.js`, a placeholder shows instead.
+**The newsletter Google Sheet** shows right inside the builder, but only after you sign in with your 350 email (signed out, you'll see a **Sign in** button instead; signing out or the sign-in running out hides it again). Read through this issue's blurbs and tick *Approved* on the ones ready to go. If the Sheet doesn't show or asks you to sign in, use **Open the Google Sheet in a new tab** (some browsers block Google sign-in inside other websites). Until the Sheet's address is added to `config.js`, a placeholder shows instead.
 
 When you're done, click **Load approved blurbs**. Only rows ticked *Approved* come through.
 
@@ -195,7 +195,7 @@ The builder loads no Google script: the sign-in window goes straight to Google, 
 
 ### The Google Sheet panel
 
-Set `SHEET_URL` in `config.js` to the Sheet's normal address (from the browser bar). The builder never reads the Sheet; Google shows it inside the panel only to people the Sheet is shared with. Keep the Sheet's sharing **Restricted** (not "Anyone with the link"), and never use **File → Share → Publish to web**: that makes everything public, including submitters' email addresses. The builder refuses "Publish to web" links. Remember that the Sheet itself contains submitters' contact emails, so only share it with the newsletter volunteers.
+Set `SHEET_URL` in `config.js` to the Sheet's normal address (from the browser bar). The builder only shows the Sheet to volunteers signed in with their 350 email: signed out, there is no Sheet and no link to it on the page, and signing out or the sign-in expiring hides it again. That keeps it off screens it shouldn't be on, but **the real lock is Google's own sharing**: `config.js` is public in this GitHub repository, so treat the Sheet's address as known. The builder never reads the Sheet; Google shows it inside the panel only to people the Sheet is shared with. Keep the Sheet's sharing **Restricted** (not "Anyone with the link"), and never use **File → Share → Publish to web**: that makes everything public, including submitters' email addresses. The builder refuses "Publish to web" links. Remember that the Sheet itself contains submitters' contact emails, so only share it with the newsletter volunteers.
 
 ### Running it on your own computer
 

@@ -23,6 +23,7 @@
 
   var credential = null;   // { idToken, name, domain, exp }, memory only
   var pendingSignIn = null;
+  var expiryTimer = null;
   var boardCss = '';       // text of styles/board.css
   var state = emptyState();
 
@@ -383,6 +384,9 @@
       p.reject(error);
     } else {
       credential = cred;
+      // When the sign-in runs out, lock the Sheet again.
+      window.clearTimeout(expiryTimer);
+      expiryTimer = window.setTimeout(updateSignInUi, Math.max(0, cred.exp * 1000 - Date.now() - 59000));
       p.resolve(cred);
     }
     updateSignInUi();
@@ -479,6 +483,7 @@
     }
     var note = $('#publish-signin-note');
     if (note) note.hidden = state.demo || signedIn();
+    renderSheetPanel();
   }
 
   function loadFromSheet() {
@@ -1165,12 +1170,38 @@
     'not-a-sheet': 'The Sheet address in config.js doesn\'t look like a Google Sheets link. It should start with https://docs.google.com/spreadsheets/d/'
   };
 
+  // Three modes: 'placeholder' (no Sheet address yet), 'locked' (signed
+  // out: no frame and no link to the Sheet anywhere on the page) and
+  // 'frame' (signed in). Only rebuilt when the mode changes, so the Sheet
+  // doesn't reload while you work in it.
+  var sheetMode = null;
+
   function renderSheetPanel() {
+    var links = N350.sheetLinks(CONFIG.SHEET_URL);
+    var mode = !links.ok ? 'placeholder' : (signedIn() ? 'frame' : 'locked');
+    if (mode === sheetMode) return;
+    sheetMode = mode;
     var body = $('#sheet-body');
     var link = $('#sheet-link');
-    var links = N350.sheetLinks(CONFIG.SHEET_URL);
+    var hadFocus = body.contains(document.activeElement);
     body.textContent = '';
-    if (links.ok) {
+    if (mode === 'locked') {
+      body.appendChild(el('div', { className: 'nb-sheet-placeholder', id: 'sheet-locked' }, [
+        el('div', {}, [
+          el('p', { className: 'nb-h3', text: 'Sign in to see the Sheet' }),
+          el('p', { text: signInConfigured()
+            ? 'The newsletter Sheet is only shown to volunteers signed in with their 350 email.'
+            : 'The newsletter Sheet is only shown to signed-in volunteers, and signing in isn\'t set up yet (see README).' }),
+          signInConfigured()
+            ? el('button', { type: 'button', className: 'nb-btn', id: 'sheet-signin-btn', text: 'Sign in with your 350 email' })
+            : null
+        ])
+      ]));
+      link.href = '#step-2';
+      link.textContent = 'Google Sheet (step 2)';
+      link.removeAttribute('target');
+      link.removeAttribute('rel');
+    } else if (mode === 'frame') {
       body.appendChild(el('iframe', {
         className: 'nb-sheet-frame',
         id: 'sheet-frame',
@@ -1204,12 +1235,24 @@
       link.removeAttribute('target');
       link.removeAttribute('rel');
     }
+    loadSheetFrame();
+    if (hadFocus) $('#step-2-title').focus();
   }
 
-  // The frame only loads once step 2 is showing.
+  function onSheetSignIn(event) {
+    if (!event.target.closest('#sheet-signin-btn')) return;
+    signIn().then(function () {
+      announce('Signed in. The Sheet is now showing.');
+      $('#step-2-title').focus();
+    }).catch(function (err) {
+      showMessage('error', asUserError(err));
+    });
+  }
+
+  // The frame only loads once step 2 is showing, and only when signed in.
   function loadSheetFrame() {
     var frame = $('#sheet-frame');
-    if (frame && !frame.getAttribute('src') && !$('#step-2').hidden) {
+    if (frame && !frame.getAttribute('src') && !$('#step-2').hidden && signedIn()) {
       frame.setAttribute('src', frame.getAttribute('data-src'));
     }
   }
@@ -1260,6 +1303,7 @@
     $('#signin-btn').addEventListener('click', onSignInClick);
     $('#signout-btn').addEventListener('click', signOut);
     $('#sheet-link').addEventListener('click', onSheetLink);
+    $('#sheet-body').addEventListener('click', onSheetSignIn);
     listenForSignIn();
     renderSheetPanel();
     updateSignInUi();
