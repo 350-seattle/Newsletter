@@ -194,7 +194,7 @@ body.nb-app {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -246,6 +246,12 @@ body.nb-app {
   background: transparent;
   border-color: #C9C6BD;
   cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .nb-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -523,44 +529,6 @@ main.nb-wrap {
 }
 
 /* ---- The Google Sheet panel ---- */
-.nb-sheet {
-  margin-top: 24px;
-}
-
-.nb-sheet-summary {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.nb-sheet-summary::-webkit-details-marker {
-  display: none;
-}
-
-.nb-sheet-summary::before {
-  content: "+";
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--nb-ocean);
-  color: var(--nb-paper);
-  font-weight: 700;
-}
-
-.nb-sheet[open] > .nb-sheet-summary::before {
-  content: "\2212";
-}
-
-.nb-sheet-summary .nb-h2 {
-  margin: 0;
-}
-
 .nb-sheet-frame {
   display: block;
   width: 100%;

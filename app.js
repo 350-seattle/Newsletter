@@ -28,7 +28,7 @@
 
   function emptyState() {
     return {
-      version: 1,
+      version: 2,
       demo: false,
       issue: null,
       items: [],           // sanitized items, in the order they arrived
@@ -149,7 +149,7 @@
       var raw = sessionStorage.getItem(STORE_KEY);
       if (!raw) return null;
       var s = JSON.parse(raw);
-      if (!s || s.version !== 1 || !s.issue || !Array.isArray(s.items) || !Array.isArray(s.categories)) return null;
+      if (!s || s.version !== 2 || !s.issue || !Array.isArray(s.items) || !Array.isArray(s.categories)) return null;
       // Re-sanitize in case the stored copy was tampered with.
       var items = N350.sanitizeItems(s.items).items;
       var issue = N350.sanitizeIssue(s.issue).issue;
@@ -165,8 +165,8 @@
       merged.excluded = s.excluded && typeof s.excluded === 'object' ? s.excluded : {};
       merged.featured = typeof s.featured === 'number' && items[s.featured] ? s.featured : null;
       merged.sourceWarnings = Array.isArray(s.sourceWarnings) ? s.sourceWarnings.filter(function (w) { return w && typeof w.message === 'string'; }) : [];
-      merged.step = Math.min(Math.max(parseInt(s.step, 10) || 1, 1), 4);
-      merged.maxStep = Math.min(Math.max(parseInt(s.maxStep, 10) || 1, merged.step), 4);
+      merged.step = Math.min(Math.max(parseInt(s.step, 10) || 1, 1), 5);
+      merged.maxStep = Math.min(Math.max(parseInt(s.maxStep, 10) || 1, merged.step), 5);
       merged.publishedUrl = s.publishedUrl && N350.isHttpUrl(s.publishedUrl) ? s.publishedUrl : null;
       merged.weekSummary = typeof s.weekSummary === 'string' ? N350.sanitizeIssue({ weekSummary: s.weekSummary }).issue.weekSummary : '';
       merged.weekSummaryEdited = !!s.weekSummaryEdited;
@@ -259,8 +259,8 @@
     if (previous.issue && previous.issue.slug === next.issue.slug && previous.demo === isDemo) {
       carryOver(previous, next);
     }
-    next.step = 2;
-    next.maxStep = Math.max(2, previous.issue && previous.issue.slug === next.issue.slug ? previous.maxStep : 2);
+    next.step = 3;
+    next.maxStep = Math.max(3, previous.issue && previous.issue.slug === next.issue.slug ? previous.maxStep : 3);
     state = next;
     save();
   }
@@ -441,7 +441,8 @@
     }
     signIn().then(function () {
       announce('Signed in.');
-      $('#load-btn').focus();
+      var next = $('#to-sheet-btn');
+      (next && !$('#step-1').hidden ? next : $('#load-btn')).focus();
     }).catch(function (err) {
       showMessage('error', asUserError(err));
     });
@@ -518,7 +519,7 @@
       showMessage('warning', w.message, { replace: false });
     });
     renderAll();
-    goTo(2);
+    goTo(3);
   }
 
   function setBusy(btn, busy, label) {
@@ -717,8 +718,8 @@
     save();
     renderArrangeList();
     renderPreview('#preview-arrange', false);
-    if (state.maxStep >= 3) renderCheck();
-    if (state.maxStep >= 4) renderShare();
+    if (state.maxStep >= 4) renderCheck();
+    if (state.maxStep >= 5) renderShare();
   }
 
   // ------------------------------------------------------------------
@@ -750,8 +751,8 @@
     window.clearTimeout(recapTimer);
     recapTimer = window.setTimeout(function () {
       renderPreview('#preview-arrange', false);
-      if (state.maxStep >= 3) renderCheck();
-      if (state.maxStep >= 4) renderShare();
+      if (state.maxStep >= 4) renderCheck();
+      if (state.maxStep >= 5) renderShare();
     }, 250);
   }
 
@@ -1121,7 +1122,7 @@
   function renderSteps() {
     $all('.nb-step').forEach(function (btn) {
       var n = Number(btn.getAttribute('data-step'));
-      var reachable = n === 1 || hasData();
+      var reachable = n <= 2 || hasData();
       if (n === state.step) btn.setAttribute('aria-current', 'step');
       else btn.removeAttribute('aria-current');
       if (reachable) btn.removeAttribute('aria-disabled');
@@ -1133,17 +1134,18 @@
 
   function goTo(n, opts) {
     opts = opts || {};
-    if (n > 1 && !hasData()) n = 1;
+    if (n > 2 && !hasData()) n = 1;
     state.step = n;
     state.maxStep = Math.max(state.maxStep, n);
     save();
     $all('.nb-step-panel').forEach(function (p) {
       p.hidden = Number(p.getAttribute('data-step')) !== n;
     });
-    if (n === 2) { fillRecap(); renderArrangeList(); renderPreview('#preview-arrange', false); }
-    if (n === 3) renderCheck();
-    if (n === 4) renderShare();
-    if (n === 1) { updateSignInUi(); loadSheetFrame(); }
+    if (n === 1) updateSignInUi();
+    if (n === 2) { updateSignInUi(); loadSheetFrame(); }
+    if (n === 3) { fillRecap(); renderArrangeList(); renderPreview('#preview-arrange', false); }
+    if (n === 4) renderCheck();
+    if (n === 5) renderShare();
     renderSteps();
     if (opts.focus !== false) {
       var h = $('#step-' + n + '-title');
@@ -1165,7 +1167,7 @@
 
   function renderSheetPanel() {
     var body = $('#sheet-body');
-    var link = $('#sheet-link-2');
+    var link = $('#sheet-link');
     var links = N350.sheetLinks(CONFIG.SHEET_URL);
     body.textContent = '';
     if (links.ok) {
@@ -1197,29 +1199,26 @@
           el('p', { text: SHEET_PLACEHOLDER[links.reason] || SHEET_PLACEHOLDER.missing })
         ])
       ]));
-      link.href = '#sheet-panel';
+      link.href = '#step-2';
+      link.textContent = 'Google Sheet (step 2)';
       link.removeAttribute('target');
       link.removeAttribute('rel');
     }
   }
 
-  // The frame only loads when step 1 is showing and the panel is open.
+  // The frame only loads once step 2 is showing.
   function loadSheetFrame() {
     var frame = $('#sheet-frame');
-    if (frame && !frame.getAttribute('src') && $('#sheet-panel').open && !$('#step-1').hidden) {
+    if (frame && !frame.getAttribute('src') && !$('#step-2').hidden) {
       frame.setAttribute('src', frame.getAttribute('data-src'));
     }
   }
 
   function onSheetLink(event) {
     var link = event.currentTarget;
-    if (link.getAttribute('href') !== '#sheet-panel') return; // real Sheet link: opens a new tab
+    if (link.getAttribute('href') !== '#step-2') return; // real Sheet link: opens a new tab
     event.preventDefault();
-    var panel = $('#sheet-panel');
-    panel.open = true;
-    goTo(1, { focus: false });
-    panel.scrollIntoView();
-    panel.querySelector('summary').focus();
+    goTo(2);
   }
 
   function renderAll() {
@@ -1227,8 +1226,8 @@
     if (!hasData()) return;
     renderArrangeList();
     renderPreview('#preview-arrange', false);
-    if (state.maxStep >= 3) renderCheck();
-    if (state.maxStep >= 4) renderShare();
+    if (state.maxStep >= 4) renderCheck();
+    if (state.maxStep >= 5) renderShare();
   }
 
   function startOver() {
@@ -1260,8 +1259,7 @@
     $('#load-btn').addEventListener('click', loadFromSheet);
     $('#signin-btn').addEventListener('click', onSignInClick);
     $('#signout-btn').addEventListener('click', signOut);
-    $('#sheet-panel').addEventListener('toggle', loadSheetFrame);
-    $('#sheet-link-2').addEventListener('click', onSheetLink);
+    $('#sheet-link').addEventListener('click', onSheetLink);
     listenForSignIn();
     renderSheetPanel();
     updateSignInUi();

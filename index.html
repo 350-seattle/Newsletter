@@ -27,10 +27,11 @@
 
   <nav class="nb-wrap nb-steps-nav" aria-label="Steps">
     <ol class="nb-steps">
-      <li><button type="button" class="nb-step" data-step="1"><span class="nb-step-num" aria-hidden="true">1</span><span class="nb-step-label"><span class="nb-sr">Step 1: </span>Load</span></button></li>
-      <li><button type="button" class="nb-step" data-step="2"><span class="nb-step-num" aria-hidden="true">2</span><span class="nb-step-label"><span class="nb-sr">Step 2: </span>Arrange</span></button></li>
-      <li><button type="button" class="nb-step" data-step="3"><span class="nb-step-num" aria-hidden="true">3</span><span class="nb-step-label"><span class="nb-sr">Step 3: </span>Final check</span></button></li>
-      <li><button type="button" class="nb-step" data-step="4"><span class="nb-step-num" aria-hidden="true">4</span><span class="nb-step-label"><span class="nb-sr">Step 4: </span>Publish and share</span></button></li>
+      <li><button type="button" class="nb-step" data-step="1"><span class="nb-step-num" aria-hidden="true">1</span><span class="nb-step-label"><span class="nb-sr">Step 1: </span>Sign in</span></button></li>
+      <li><button type="button" class="nb-step" data-step="2"><span class="nb-step-num" aria-hidden="true">2</span><span class="nb-step-label"><span class="nb-sr">Step 2: </span>Review in the Sheet</span></button></li>
+      <li><button type="button" class="nb-step" data-step="3"><span class="nb-step-num" aria-hidden="true">3</span><span class="nb-step-label"><span class="nb-sr">Step 3: </span>Arrange</span></button></li>
+      <li><button type="button" class="nb-step" data-step="4"><span class="nb-step-num" aria-hidden="true">4</span><span class="nb-step-label"><span class="nb-sr">Step 4: </span>Final check</span></button></li>
+      <li><button type="button" class="nb-step" data-step="5"><span class="nb-step-num" aria-hidden="true">5</span><span class="nb-step-label"><span class="nb-sr">Step 5: </span>Publish and share</span></button></li>
     </ol>
   </nav>
 
@@ -45,33 +46,47 @@
 
     <!-- Step 1 -->
     <section class="nb-step-panel" id="step-1" data-step="1" aria-labelledby="step-1-title">
-      <h1 class="nb-title" id="step-1-title" tabindex="-1">Load this issue's blurbs</h1>
-      <p class="nb-lede">Sign in with your 350 Seattle email, then load the blurbs that were approved in the Google Sheet.</p>
+      <h1 class="nb-title" id="step-1-title" tabindex="-1">Sign in</h1>
+      <p class="nb-lede">Sign in with your 350 Seattle email to review this issue's blurbs and build the board.</p>
 
       <section class="nb-card nb-load" aria-labelledby="signin-title">
-        <h2 class="nb-h2" id="signin-title">Sign in</h2>
+        <h2 class="nb-h2" id="signin-title">Your 350 account</h2>
         <p class="nb-help" id="signin-help"></p>
         <p class="nb-signed-in" id="signin-status" role="status" hidden></p>
         <div class="nb-signin-row">
           <button type="button" class="nb-btn" id="signin-btn">Sign in with your 350 email</button>
           <button type="button" class="nb-btn nb-btn--secondary" id="signout-btn" hidden>Sign out</button>
         </div>
-        <button type="button" class="nb-btn" id="load-btn">Load approved blurbs</button>
       </section>
 
       <p class="nb-demo">No 350 account, or just looking around? <a id="demo-link" href="?demo=1">Try with sample data</a></p>
 
-      <details class="nb-card nb-sheet" id="sheet-panel" open>
-        <summary class="nb-sheet-summary"><span class="nb-h2">The newsletter Google Sheet</span></summary>
-        <p class="nb-help">Review the blurbs and tick <strong>Approved</strong> on the ones ready to go, then load them above.</p>
-        <div id="sheet-body"></div>
-      </details>
+      <div class="nb-actions">
+        <span></span>
+        <button type="button" class="nb-btn" id="to-sheet-btn" data-goto="2">Next: Review in the Sheet</button>
+      </div>
     </section>
 
     <!-- Step 2 -->
     <section class="nb-step-panel" id="step-2" data-step="2" aria-labelledby="step-2-title" hidden>
-      <h1 class="nb-title" id="step-2-title" tabindex="-1">Arrange the board</h1>
-      <p class="nb-lede">Choose which items to include, put them in order, and pick one to feature. The preview updates as you go. To change the wording, edit the <a id="sheet-link-2" href="#sheet-panel">Google Sheet</a> and load again.</p>
+      <h1 class="nb-title" id="step-2-title" tabindex="-1">Review in the Sheet</h1>
+      <p class="nb-lede">Read through this issue's blurbs in the Google Sheet and tick <strong>Approved</strong> on the ones ready to go. Then load them.</p>
+
+      <section class="nb-card nb-sheet" id="sheet-panel" aria-labelledby="sheet-title">
+        <h2 class="nb-h2" id="sheet-title">The newsletter Google Sheet</h2>
+        <div id="sheet-body"></div>
+      </section>
+
+      <div class="nb-actions">
+        <button type="button" class="nb-btn nb-btn--secondary" data-goto="1">Back</button>
+        <button type="button" class="nb-btn" id="load-btn">Load approved blurbs</button>
+      </div>
+    </section>
+
+    <!-- Step 3 -->
+    <section class="nb-step-panel" id="step-3" data-step="3" aria-labelledby="step-3-title" hidden>
+      <h1 class="nb-title" id="step-3-title" tabindex="-1">Arrange the board</h1>
+      <p class="nb-lede">Choose which items to include, put them in order, and pick one to feature. The preview updates as you go. To change the wording, edit the <a id="sheet-link" href="#step-2">Google Sheet (step 2)</a> and load again.</p>
 
       <div class="nb-arrange">
         <div class="nb-arrange-col">
@@ -91,14 +106,14 @@
       </div>
 
       <div class="nb-actions">
-        <button type="button" class="nb-btn nb-btn--secondary" data-goto="1">Back</button>
-        <button type="button" class="nb-btn" data-goto="3">Next: Final check</button>
+        <button type="button" class="nb-btn nb-btn--secondary" data-goto="2">Back</button>
+        <button type="button" class="nb-btn" data-goto="4">Next: Final check</button>
       </div>
     </section>
 
-    <!-- Step 3 -->
-    <section class="nb-step-panel" id="step-3" data-step="3" aria-labelledby="step-3-title" hidden>
-      <h1 class="nb-title" id="step-3-title" tabindex="-1">Final check</h1>
+    <!-- Step 4 -->
+    <section class="nb-step-panel" id="step-4" data-step="4" aria-labelledby="step-4-title" hidden>
+      <h1 class="nb-title" id="step-4-title" tabindex="-1">Final check</h1>
       <div id="check-summary" class="nb-check-summary"></div>
 
       <div class="nb-check-grid">
@@ -112,14 +127,14 @@
       <div class="nb-preview nb-preview--full" id="preview-final" role="region" aria-labelledby="final-preview-title"></div>
 
       <div class="nb-actions">
-        <button type="button" class="nb-btn nb-btn--secondary" data-goto="2">Back to arrange</button>
-        <button type="button" class="nb-btn" data-goto="4">Next: Publish and share</button>
+        <button type="button" class="nb-btn nb-btn--secondary" data-goto="3">Back to arrange</button>
+        <button type="button" class="nb-btn" data-goto="5">Next: Publish and share</button>
       </div>
     </section>
 
-    <!-- Step 4 -->
-    <section class="nb-step-panel" id="step-4" data-step="4" aria-labelledby="step-4-title" hidden>
-      <h1 class="nb-title" id="step-4-title" tabindex="-1">Publish and share</h1>
+    <!-- Step 5 -->
+    <section class="nb-step-panel" id="step-5" data-step="5" aria-labelledby="step-5-title" hidden>
+      <h1 class="nb-title" id="step-5-title" tabindex="-1">Publish and share</h1>
       <p class="nb-lede">Publish the board first. The email links to the published page.</p>
 
       <div class="nb-share-grid">
@@ -172,7 +187,7 @@
       </div>
 
       <div class="nb-actions">
-        <button type="button" class="nb-btn nb-btn--secondary" data-goto="3">Back to final check</button>
+        <button type="button" class="nb-btn nb-btn--secondary" data-goto="4">Back to final check</button>
       </div>
     </section>
   </main>
