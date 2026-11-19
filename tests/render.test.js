@@ -249,3 +249,20 @@ test('weekly summary: no section when empty; validation warnings', () => {
   assert.match(msgs({ slug: 't', weekSummary: 'See www.example.org' }), /contains a web address/);
   assert.equal(N350.validate({ slug: 't', weekSummary: 'A fine week.' }, items).errors.length, 0, 'never blocks publishing');
 });
+
+test('sheetLinks: private Sheet links only', () => {
+  const id = '1AbCdEfGhIjKlMnOpQrStUvWxYz0123456789';
+  const ok = N350.sheetLinks(`https://docs.google.com/spreadsheets/d/${id}/edit?usp=sharing#gid=42`);
+  assert.equal(ok.ok, true);
+  assert.equal(ok.embedUrl, `https://docs.google.com/spreadsheets/d/${id}/edit?rm=minimal#gid=42`);
+  assert.equal(ok.openUrl, `https://docs.google.com/spreadsheets/d/${id}/edit#gid=42`);
+  assert.equal(N350.sheetLinks(`https://docs.google.com/spreadsheets/u/1/d/${id}/htmlview`).embedUrl,
+    `https://docs.google.com/spreadsheets/d/${id}/edit?rm=minimal`);
+  assert.deepEqual(N350.sheetLinks(''), { ok: false, reason: 'missing' });
+  assert.equal(N350.sheetLinks(`https://docs.google.com/spreadsheets/d/e/2PACX-${id}/pubhtml`).reason, 'published');
+  assert.equal(N350.sheetLinks(`https://docs.google.com/spreadsheets/d/${id}/pub?output=csv`).reason, 'published');
+  for (const bad of ['http://docs.google.com/spreadsheets/d/' + id, 'https://evil.example/spreadsheets/d/' + id,
+    'https://docs.google.com.evil.example/spreadsheets/d/' + id, 'javascript:alert(1)', 'https://docs.google.com/document/d/' + id]) {
+    assert.equal(N350.sheetLinks(bad).reason, 'not-a-sheet', bad);
+  }
+});

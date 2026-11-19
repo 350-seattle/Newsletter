@@ -24,26 +24,45 @@ test('nothing is written to localStorage or cookies', () => {
   assert.ok(!/document\.cookie/.test(app), 'app.js must not use cookies');
 });
 
-test('the token is never put in storage, the URL or the page', () => {
+test('the sign-in is never put in storage, the URL or the page', () => {
   const lines = app.split('\n');
   lines.forEach((line, i) => {
     if (/sessionStorage\.setItem|history\.(push|replace)State|location\.(href|search)\s*=|\.innerHTML\s*=|textContent\s*=|setAttribute\(/.test(line)) {
-      assert.ok(!/\btoken\b/.test(line), 'line ' + (i + 1) + ' mixes the token into storage/URL/DOM: ' + line.trim());
+      assert.ok(!/idToken|credential\.id/.test(line), 'line ' + (i + 1) + ' mixes the sign-in into storage/URL/DOM: ' + line.trim());
     }
   });
-  // The saved state object has no token field.
+  // The saved state object has no sign-in field.
   const emptyState = app.slice(app.indexOf('function emptyState'), app.indexOf('// Small helpers'));
-  assert.ok(!/token/i.test(emptyState));
+  assert.ok(!/token|credential/i.test(emptyState));
+  // The credential is a plain in-memory variable.
+  assert.match(app, /var credential = null;/);
 });
 
-test('the load form cannot leak the token into the URL', () => {
-  assert.match(index, /<form id="load-form"[^>]*method="post"/);
+test('there is no token form that could leak into a URL', () => {
+  assert.ok(!/<form id="load-form"/.test(index));
+  assert.ok(!/type="password"/.test(index));
 });
 
-test('requests use text/plain and send the token in the body', () => {
+test('requests use text/plain and send the sign-in in the body', () => {
   assert.match(app, /'Content-Type': 'text\/plain'/);
-  assert.match(app, /action: 'items', token: token/);
-  assert.match(app, /action: 'publish',\s*token: token/);
+  assert.match(app, /action: 'items', idToken: credential\.idToken/);
+  assert.match(app, /action: 'publish',\s*idToken: credential\.idToken/);
+  assert.ok(!/\btoken: /.test(app), 'old token field is gone');
+});
+
+test('sign-in uses Google OpenID with state, nonce and the 350 domain, and no Google script', () => {
+  assert.match(app, /response_type', 'id_token'/);
+  assert.match(app, /q\.set\('state'/);
+  assert.match(app, /q\.set\('nonce'/);
+  assert.match(app, /q\.set\('hd', emailDomain\(\)\)/);
+  assert.match(app, /claims\.nonce !== pendingSignIn\.nonce/);
+  assert.match(app, /claims\.aud !== /);
+  assert.match(app, /event\.origin === window\.location\.origin/);
+  assert.ok(!/accounts\.google\.com\/gsi/.test(index + app), 'no Google Identity Services script');
+  const cb = read('auth-callback.js');
+  assert.match(cb, /history\.replaceState\(null, '', window\.location\.pathname\)/, 'callback wipes its own URL');
+  assert.match(cb, /postMessage\(msg, window\.location\.origin\)/, 'callback only talks to this site');
+  assert.ok(!/console|localStorage|sessionStorage|cookie/.test(cb));
 });
 
 test('no remote scripts, stylesheets or AI services', () => {

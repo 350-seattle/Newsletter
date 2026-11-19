@@ -28,8 +28,13 @@ const CHROME = process.env.CHROME_PATH || [
 ].find((p) => fs.existsSync(p));
 
 const FAKE_SCRIPT = 'https://script.google.com/macros/s/TEST-DEPLOYMENT/exec';
-const TOKEN = 'TOKEN-7f3a9c-do-not-leak';
+// Fake Google sign-in, served by the test server (see /__fake-google-auth).
+const CLIENT_ID = 'test-client.apps.googleusercontent.com';
+const fakeAuth = { email: 'volunteer@350seattle.org', hd: '350seattle.org', issued: [] };
+const SHEET_ID = '1AbCdEfGhIjKlMnOpQrStUvWxYz0123456789';
+const b64url = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
 const results = [];
+const sheetResult = { ok: true, withUrl: null };
 function record(n, name, pass, detail) {
   results.push({ n, name, pass, detail });
   process.stdout.write(`${pass ? 'PASS' : 'FAIL'}  ${n}. ${name}${detail ? ' :: ' + detail : ''}\n`);
@@ -43,6 +48,23 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
   let file = path.normalize(path.join(root, decodeURIComponent(url.pathname)));
   if (!file.startsWith(root)) { res.writeHead(403); res.end(); return; }
+  if (url.pathname === '/__fake-google-auth') {
+    // Stands in for accounts.google.com: sends an ID token back to the
+    // builder's callback page, the way Google does.
+    const q = url.searchParams;
+    const redirect = q.get('redirect_uri') || '';
+    if (!redirect.startsWith(ORIGIN + '/') || q.get('response_type') !== 'id_token') { res.writeHead(400); res.end('bad request'); return; }
+    const claims = { iss: 'https://accounts.google.com', aud: q.get('client_id'), sub: '1234567890', email: fakeAuth.email,
+      email_verified: true, given_name: 'Robin', name: 'Robin Volunteer', nonce: q.get('nonce'),
+      iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 3600 };
+    if (fakeAuth.hd) claims.hd = fakeAuth.hd;
+    const idToken = b64url({ alg: 'RS256', typ: 'JWT' }) + '.' + b64url(claims) + '.fake-signature-' + Math.random().toString(36).slice(2);
+    fakeAuth.issued.push(idToken);
+    const hash = new URLSearchParams({ id_token: idToken, state: q.get('state') || '', authuser: '0' }).toString();
+    res.writeHead(302, { Location: redirect + '#' + hash, 'Cache-Control': 'no-store' });
+    res.end();
+    return;
+  }
   if (url.pathname.startsWith('/__e2e/')) file = path.join(out, url.pathname.slice(7));
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
   if (!fs.existsSync(file)) { res.writeHead(404); res.end('not found'); return; }
@@ -81,8 +103,15 @@ async function newPage({ width = 1280, height = 900, mock = null, downloads = nu
       const u = req.url();
       if (u.startsWith(ORIGIN + '/config.js')) {
         const cfg = fs.readFileSync(path.join(root, 'config.js'), 'utf8')
-          .replace(/APPS_SCRIPT_URL: '[^']*'/, `APPS_SCRIPT_URL: '${FAKE_SCRIPT}'`);
+          .replace(/APPS_SCRIPT_URL: '[^']*'/, `APPS_SCRIPT_URL: '${FAKE_SCRIPT}'`)
+          .replace(/GOOGLE_CLIENT_ID: '[^']*'/, `GOOGLE_CLIENT_ID: '${CLIENT_ID}'`)
+          .replace(/GOOGLE_AUTH_URL: '[^']*'/, `GOOGLE_AUTH_URL: '${ORIGIN}/__fake-google-auth'`)
+          .replace(/SHEET_URL: '[^']*'/, `SHEET_URL: 'https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=7'`);
         return req.respond({ status: 200, contentType: 'text/javascript', body: cfg });
+      }
+      if (u.startsWith('https://docs.google.com/')) {
+        page.sheetRequests = (page.sheetRequests || []).concat(u);
+        return req.respond({ status: 200, contentType: 'text/html', body: '<!doctype html><title>Fake Sheet</title><p>Fake Google Sheet</p>' });
       }
       if (u.startsWith(FAKE_SCRIPT)) {
         page.requests.push({ url: u, method: req.method(), headers: req.headers(), body: req.postData() });
@@ -476,8 +505,16 @@ try {
     }
   });
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'networkidle0' });
-  await page.type('#token', TOKEN);
-  await page.keyboard.press('Enter');
+  // Sheet panel (extra check 11): the frame shows the private Sheet link
+  const sheet = await page.evaluate(() => {
+    const f = document.getElementById('sheet-frame');
+    return f && { src: f.getAttribute('src'), title: f.title, placeholder: !!document.getElementById('sheet-placeholder') };
+  });
+  // Sign in with the fake Google window, then load
+  await page.click('#signin-btn');
+  await page.waitForFunction(() => !document.getElementById('signin-status').hidden, { timeout: 15000 });
+  const signedInText = await page.$eval('#signin-status', (e) => e.textContent);
+  await page.click('#load-btn');
   await waitStep(page, 2);
   const emailWarnings = await page.$$eval('#messages .nb-msg--warning', (m) => m.map((x) => x.textContent));
   const emailLeak = await page.evaluate(() => /team\.lead@|organizer@/.test(document.documentElement.outerHTML + sessionStorage.getItem('n350-arrangement')));
@@ -557,33 +594,100 @@ try {
     return { url: location.href, localStorage: JSON.stringify(ls), sessionStorage: JSON.stringify(ss), cookie: document.cookie,
       dom: document.documentElement.outerHTML, inputs, history: history.length };
   });
+  // The sign-in proof (ID token) must never appear anywhere on this page.
+  const issued = fakeAuth.issued.slice();
+  const has = (s) => issued.some((t) => String(s).includes(t) || String(s).includes(t.split('.')[2]));
   const leaks = [];
-  if (page.url().includes(TOKEN) || where.url.includes(TOKEN)) leaks.push('URL');
-  if (where.localStorage.includes(TOKEN)) leaks.push('localStorage');
-  if (where.sessionStorage.includes(TOKEN)) leaks.push('sessionStorage');
-  if (where.cookie.includes(TOKEN)) leaks.push('cookie');
-  if (where.dom.includes(TOKEN) || where.inputs.includes(TOKEN)) leaks.push('page');
-  if (page.consoleLog.join('\n').includes(TOKEN)) leaks.push('console');
-  if (html && fs.readFileSync(html, 'utf8').includes(TOKEN)) leaks.push('downloaded HTML');
-  const sentInBody = page.requests.every((r) => r.method === 'POST' && JSON.parse(r.body).token === TOKEN && !r.url.includes(TOKEN));
+  if (has(page.url()) || has(where.url)) leaks.push('URL');
+  if (has(where.localStorage)) leaks.push('localStorage');
+  if (has(where.sessionStorage)) leaks.push('sessionStorage');
+  if (has(where.cookie)) leaks.push('cookie');
+  if (has(where.dom) || has(where.inputs)) leaks.push('page');
+  if (has(page.consoleLog.join('\n'))) leaks.push('console');
+  if (html && has(fs.readFileSync(html, 'utf8'))) leaks.push('downloaded HTML');
+  if (/volunteer@350seattle\.org/.test(where.dom)) leaks.push('signed-in email shown on page');
+  const sentInBody = issued.length === 1 && page.requests.every((r) => r.method === 'POST' &&
+    JSON.parse(r.body).idToken === issued[0] && !('token' in JSON.parse(r.body)) && !has(r.url));
   const plain = page.requests.every((r) => /^text\/plain/.test(r.headers['content-type'] || ''));
-  // after a refresh the token is gone but the arrangement stays
+  const signedInOk = /^Signed in as Robin \(@350seattle\.org\)\.$/.test(signedInText);
+  // after a refresh the sign-in is gone but the arrangement stays
   await page.reload({ waitUntil: 'networkidle0' });
   await waitStep(page, 4);
   const afterRefresh = await page.evaluate(() => ({
-    tokenFieldShown: !document.getElementById('publish-token-wrap').hidden,
+    asksToSignIn: !document.getElementById('publish-signin-note').hidden,
     kept: !!sessionStorage.getItem('n350-arrangement')
   }));
-  record(8, 'Token never in URL, localStorage or console', leaks.length === 0 && sentInBody && plain && afterRefresh.tokenFieldShown && afterRefresh.kept,
-    (leaks.length ? 'LEAKED to: ' + leaks.join(', ') : 'not found in URL, localStorage, sessionStorage, cookies, page, console or downloads') +
-    `; ${page.requests.length} requests sent it only in a text/plain POST body` +
-    `; after refresh token gone (asks again: ${afterRefresh.tokenFieldShown}), arrangement kept (${afterRefresh.kept})` +
+  // publishing after the refresh signs in again first
+  await page.click('#publish-btn');
+  await page.waitForSelector('#confirm-dialog[open]', { timeout: 15000 });
+  const signedInAgain = fakeAuth.issued.length === 2;
+  await page.keyboard.press('Escape');
+  record(8, 'Sign-in proof never in URL, localStorage or console', leaks.length === 0 && sentInBody && plain && signedInOk &&
+    afterRefresh.asksToSignIn && afterRefresh.kept && signedInAgain,
+    (leaks.length ? 'LEAKED to: ' + leaks.join(', ') : 'ID token not found in URL, localStorage, sessionStorage, cookies, page, console or downloads') +
+    `; ${page.requests.length} requests sent it only as idToken in a text/plain POST body (${sentInBody})` +
+    `; showed "${signedInText}"` +
+    `; after refresh signed out (asks again: ${afterRefresh.asksToSignIn}), arrangement kept (${afterRefresh.kept}), publish re-signed in (${signedInAgain})` +
     `; published URL ${publishedUrl}` +
     `; email handling: ${emailWarnings.length} warnings shown, address leaked: ${emailLeak}`);
+
+  const sheetOk = !!sheet && sheet.src === `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?rm=minimal#gid=7` &&
+    sheet.title === 'The newsletter Google Sheet' && !sheet.placeholder;
+  sheetResult.withUrl = sheetOk ? 'frame shows the private Sheet link' : 'frame wrong: ' + JSON.stringify(sheet);
+  sheetResult.ok = sheetResult.ok && sheetOk;
   await page.browserContext().close();
 } catch (e) {
-  record(8, 'Token never in URL, localStorage or console', false, String(e && e.stack || e));
+  record(8, 'Sign-in proof never in URL, localStorage or console', false, String(e && e.stack || e));
   if (!results.find((r) => r.n === 9)) record(9, 'Server error or offline: plain message, arrangement kept', false, 'not run');
+}
+
+// ====================================================== CHECK 11 (extra)
+// Sheet panel placeholder, sign-in not set up, and a non-350 account.
+try {
+  const notes = [];
+  // Default config: no Sheet address, no Google client ID yet.
+  const page = await newPage({ width: 1280 });
+  await page.goto(ORIGIN + '/index.html', { waitUntil: 'networkidle0' });
+  const placeholder = await page.evaluate(() => {
+    const p = document.getElementById('sheet-placeholder');
+    return !!p && p.offsetHeight > 0 && /appear here/.test(p.textContent) && !document.getElementById('sheet-frame');
+  });
+  notes.push('placeholder shown: ' + placeholder);
+  if (!placeholder) sheetResult.ok = false;
+  await page.click('#signin-btn');
+  await page.waitForFunction(() => /isn't set up yet/.test(document.getElementById('messages').textContent), { timeout: 5000 });
+  notes.push('"not set up" message: true');
+  // From step 2, the "Google Sheet" link jumps back to the panel.
+  await page.click('#demo-link');
+  await waitStep(page, 2);
+  await page.click('#sheet-link-2');
+  await waitStep(page, 1);
+  const panelFocused = await page.evaluate(() => document.activeElement === document.querySelector('#sheet-panel summary') && document.getElementById('sheet-panel').open);
+  notes.push('step 2 link opens the panel: ' + panelFocused);
+  if (!panelFocused) sheetResult.ok = false;
+  await page.screenshot({ path: path.join(out, 'step1-sheet-placeholder.png'), fullPage: true });
+  await page.browserContext().close();
+
+  // A Google account outside 350 Seattle is turned away.
+  fakeAuth.email = 'someone@gmail.com';
+  fakeAuth.hd = null;
+  const before = fakeAuth.issued.length;
+  const p2 = await newPage({ mock: () => ({ body: JSON.stringify({ ok: false, error: 'should not be called' }) }) });
+  await p2.goto(ORIGIN + '/index.html', { waitUntil: 'networkidle0' });
+  await p2.click('#signin-btn');
+  await p2.waitForFunction(() => /isn't a 350 Seattle email/.test(document.getElementById('messages').textContent), { timeout: 15000 });
+  const stillOut = await p2.evaluate(() => document.getElementById('signin-status').hidden);
+  const wrong = stillOut && fakeAuth.issued.length === before + 1 && p2.requests.length === 0;
+  notes.push('non-350 account refused: ' + wrong);
+  await p2.screenshot({ path: path.join(out, 'step1-sheet-frame.png'), fullPage: true });
+  await p2.browserContext().close();
+  fakeAuth.email = 'volunteer@350seattle.org';
+  fakeAuth.hd = '350seattle.org';
+
+  record(11, 'Extra: Sheet panel and 350-only sign-in', sheetResult.ok && wrong,
+    notes.join('; ') + '; with SHEET_URL set: ' + (sheetResult.withUrl || 'not run'));
+} catch (e) {
+  record(11, 'Extra: Sheet panel and 350-only sign-in', false, String(e && e.stack || e));
 }
 
 // ============================================================= CHECK 10
