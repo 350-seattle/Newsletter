@@ -525,7 +525,7 @@
    that font is switched on in config.js (REAL_FONTS). */
 @font-face {
   font-family: "N350 Cal Sans";
-  src: url("https://cody-trinkaus.github.io/NewsletterBuilder/fonts/cal-sans-latin-400-normal.woff2") format("woff2");
+  src: url("https://350seattle.github.io/Newsletter/fonts/cal-sans-latin-400-normal.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -533,7 +533,7 @@
 
 @font-face {
   font-family: "N350 Fraunces";
-  src: url("https://cody-trinkaus.github.io/NewsletterBuilder/fonts/fraunces-latin-400-italic.woff2") format("woff2");
+  src: url("https://350seattle.github.io/Newsletter/fonts/fraunces-latin-400-italic.woff2") format("woff2");
   font-weight: 400;
   font-style: italic;
   font-display: swap;
@@ -541,7 +541,7 @@
 
 @font-face {
   font-family: "N350 Montserrat";
-  src: url("https://cody-trinkaus.github.io/NewsletterBuilder/fonts/montserrat-latin-500-normal.woff2") format("woff2");
+  src: url("https://350seattle.github.io/Newsletter/fonts/montserrat-latin-500-normal.woff2") format("woff2");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -549,7 +549,7 @@
 
 @font-face {
   font-family: "N350 Montserrat";
-  src: url("https://cody-trinkaus.github.io/NewsletterBuilder/fonts/montserrat-latin-700-normal.woff2") format("woff2");
+  src: url("https://350seattle.github.io/Newsletter/fonts/montserrat-latin-700-normal.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
