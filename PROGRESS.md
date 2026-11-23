@@ -6,7 +6,7 @@ follows is the "Newsletter Builder" brief; decisions are listed below.
 
 ## Where it lives
 
-Repository: moving to the 350 Seattle GitHub organization, https://github.com/350-seattle/Newsletter (remote `origin`). **Waiting (2026-11-23):** the repo must first be created in the org (empty, no README) by the owner, and the cody-trinkaus account needs write access to it. Then: `git push -u origin main`. Until then work is backed up to remote `personal` (cody-trinkaus/NewsletterBuilder). (An earlier target, the 350seattle *user* account, was dropped in favour of the org.)
+Repository: https://github.com/350-seattle/Newsletter (remote `origin`, GitHub organization 350-seattle). Moved there on 2026-11-23 with full history and the reference/ folder. The old copy, cody-trinkaus/NewsletterBuilder (remote `personal`), is no longer updated.
 Addresses in config.js, README and dist/ already point at the new site.
 Site once GitHub Pages is on: https://350-seattle.github.io/Newsletter/
 
