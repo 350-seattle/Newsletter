@@ -35,7 +35,7 @@ window.N350_CONFIG = {
   // Where the board's font files are hosted (this site's fonts/ folder).
   // Published boards load fonts from here, so it must be a full https
   // address. Blank = the fonts/ folder next to this page.
-  FONT_BASE_URL: 'https://350seattle.github.io/Newsletter/fonts/',
+  FONT_BASE_URL: 'https://350-seattle.github.io/Newsletter/fonts/',
 
   // Switch to true after adding the licensed font files to fonts/
   // (see README.md, "Using the real brand fonts").

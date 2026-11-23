@@ -11,9 +11,9 @@ You don't need to install anything or know any code to use it.
 
 ## Opening the builder
 
-Go to **https://350seattle.github.io/Newsletter/**
+Go to **https://350-seattle.github.io/Newsletter/**
 
-Want to look around first? Open **https://350seattle.github.io/Newsletter/?demo=1**, or click **Try with sample data** on the first screen. Everything works with made-up blurbs, and nothing is sent anywhere.
+Want to look around first? Open **https://350-seattle.github.io/Newsletter/?demo=1**, or click **Try with sample data** on the first screen. Everything works with made-up blurbs, and nothing is sent anywhere.
 
 ---
 
@@ -115,8 +115,8 @@ Only needed once, or if the site moves.
 
 1. On GitHub, open the repository, then **Settings → Pages**.
 2. Under **Build and deployment**, choose **Deploy from a branch**, branch **main**, folder **/ (root)**, then **Save**.
-3. After a minute or two the site is live at `https://350seattle.github.io/Newsletter/`.
-4. If that address differs from the one in `config.js` → `FONT_BASE_URL`, update it to `https://350seattle.github.io/Newsletter/fonts/`.
+3. After a minute or two the site is live at `https://350-seattle.github.io/Newsletter/`.
+4. If that address differs from the one in `config.js` → `FONT_BASE_URL`, update it to `https://350-seattle.github.io/Newsletter/fonts/`.
 
 If the WordPress site removes the `<style>` part of the board, paste the contents of `dist/board.css` into WordPress under **Appearance → Customize → Additional CSS** (one time only).
 
@@ -186,8 +186,8 @@ Needs someone with access to 350 Seattle's Google Workspace (about 10 minutes).
 1. Go to https://console.cloud.google.com/ while signed in with a 350 account, and create a project (e.g. "Newsletter Builder").
 2. **APIs & Services → OAuth consent screen**: choose **Internal** (only 350 accounts can sign in), app name "350 Newsletter Builder", and the scopes `openid`, `email`, `profile`.
 3. **APIs & Services → Credentials → Create credentials → OAuth client ID**, type **Web application**:
-   - **Authorized JavaScript origins**: `https://350seattle.github.io` (and `http://localhost:8000` for testing).
-   - **Authorized redirect URIs**: `https://350seattle.github.io/Newsletter/auth-callback.html` (and `http://localhost:8000/auth-callback.html`).
+   - **Authorized JavaScript origins**: `https://350-seattle.github.io` (and `http://localhost:8000` for testing).
+   - **Authorized redirect URIs**: `https://350-seattle.github.io/Newsletter/auth-callback.html` (and `http://localhost:8000/auth-callback.html`).
 4. Copy the **Client ID** (it ends in `.apps.googleusercontent.com`; it is not a secret) into `config.js` as `GOOGLE_CLIENT_ID`, and into the Apps Script as `CLIENT_ID`.
 5. Check `EMAIL_DOMAIN` in `config.js` matches 350's email domain.
 
