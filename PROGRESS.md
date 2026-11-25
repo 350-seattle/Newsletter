@@ -30,7 +30,7 @@ cd tests/e2e && npm install && node run.mjs   # browser checks 1-10
 - [x] README.md for volunteers
 - [x] Visual review: fixed category overflow in narrow tiles, centered text tiles, capped open-tile image height
 - [x] Final full run: 25/25 unit tests, 10/10 browser checks; committed and pushed
-- [ ] (Owner) Turn on GitHub Pages; set APPS_SCRIPT_URL and confirm BOARD_BASE_URL once the Apps Script side exists
+- [ ] (Owner) Turn on GitHub Pages; set APPS_SCRIPT_URL, GOOGLE_CLIENT_ID and SHEET_URL in config.js once the Apps Script side exists (BOARD_BASE_URL was removed 2026-11-25)
 
 ### Done: weekly summary (requested 2026-11-16)
 The volunteer writes "everything happening this week" in the builder.
@@ -56,7 +56,7 @@ Replaces the pasted token everywhere.
 
 ## Last known results (browser checks)
 
-All 11 PASS (10 from the brief, with check 5 now covering all five steps, + extra check 11 for the Sheet step and 350-only sign-in). Lighthouse a11y 100/100. 30 unit tests pass.
+All 12 PASS (10 from the brief, check 11 for the Sheet step and 350-only sign-in, check 12 for publishing as a post: no early link, draft vs live). Lighthouse a11y 100/100. 31 unit tests pass. (2026-11-25)
 
 ## Decisions made (approved plan)
 
@@ -87,11 +87,13 @@ New order: 1 Sign in, 2 Review in the Sheet (+ "Load approved blurbs" at the bot
 - [x] e2e check 11: locked with SHEET_URL set and signed out (no iframe, no docs.google.com request), unlocks after signing in from the panel, locks again on sign out
 - [x] README; commit
 
-### In progress: publishing as WordPress posts (requested 2026-11-25)
+### Done: publishing as WordPress posts (2026-11-25)
 Backend now publishes each issue as a post in the Newsletters category; reply `{ok, url, postId, status}` ("publish" | "draft"); dated addresses (e.g. /2026/12/06/dec-26-newsletter/); drafts return `?p=123` preview links; slugs like `dec-26-newsletter`; re-publish updates within 45 days, refused after (plain error).
-- [ ] Remove BOARD_BASE_URL (config, README, app). `boardUrl()` = `state.publishedUrl` or null. Step 5 image link: "Publish first…" message until published (live); no guessed link anywhere
-- [ ] `status`: draft (or `?p=` in url) → draft message + "Draft" label, never "live", no image link for the email; missing status = published. Saved as `state.publishedStatus`
-- [ ] Demo: made-up dated example.org address. Confirm dialog: 45-day wording
-- [ ] Slugs `dec-26-newsletter` in sample data, docs, tests (utm_campaign); download names avoid "newsletter-…-newsletter"
-- [ ] Tests: utm.test, e2e mock reply with dated url + status; new e2e check 12 (no link before publishing; draft message; live message + link)
-- [ ] README, full test run, commit, push
+- [x] Remove BOARD_BASE_URL (config, README, app). `boardUrl()` = `state.publishedUrl` or null. Step 5 image link: "Publish first…" message until published (live); no guessed link anywhere
+- [x] `status`: draft (or `?p=` in url) → draft message + "Draft" label, never "live", no image link for the email; missing status = published. Saved as `state.publishedStatus`
+- [x] Demo: made-up dated example.org address. Confirm dialog: 45-day wording
+- [x] Slugs `dec-26-newsletter` in sample data, docs, tests (utm_campaign); download names avoid "newsletter-…-newsletter"
+- [x] Tests: utm.test, e2e mock reply with dated url + status; new e2e check 12 (no link before publishing; draft message; live message + link)
+- [x] README, full test run, commit, push
+
+Also fixed on 2026-11-25: step numbers left over from the five-step change in messages ("fix the problems in step 3" now step 4, "leave items out / write the summary in step 2" now step 3).

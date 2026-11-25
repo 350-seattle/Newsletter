@@ -44,8 +44,9 @@ You'll see the board exactly as it will be published, a list of problems and war
 
 ### 5. Publish and share
 Do these in order:
-- **A. Publish to website.** You'll be asked to confirm. When it's done you get the page's address and a **Copy link** button.
-- **B. Download preview image.** A picture of the board (1200 pixels wide) for the top of the email. Also copy the **image link** (make the image link to it in EveryAction) and the **alt text**.
+- **A. Publish to website.** You'll be asked to confirm. Each issue becomes a **post** in the **Newsletters** category on 350seattle.org. WordPress puts the date in a post's address (for example `https://350seattle.org/2026/12/06/dec-26-newsletter/`), so the address only appears once publishing is done, with a **Copy link** button. Publishing the same issue again within 45 days updates that post instead of making a second one; after 45 days the website refuses and says so.
+  - If the website saves it as a **draft** (for example while things are being tested), the builder says "Saved as a draft on the website" and shows a **Draft** label. A draft isn't public yet, and its link (like `https://350seattle.org/?p=123`) only works while you're signed in to WordPress. Publish it in WordPress, or publish again once drafts are switched off, before sending the email.
+- **B. Download preview image.** A picture of the board (1200 pixels wide) for the top of the email. Also copy the **alt text**, and the **image link** (make the image link to it in EveryAction). The image link appears only once the board is published and public: before that, or while it's a draft, the builder shows "Publish first" instead, so the email never points at a guessed or private address.
 - **C. Copy email text.** Copies the summary (a heading per category, then each headline, its one-sentence summary and a "Read more" link) ready to paste into EveryAction. The box below the button shows exactly what will be pasted, including the full links, so you can spot-check them.
 - **D. Download HTML.** Only needed if publishing fails. In WordPress, add a **Custom HTML** block to a new post and paste in the downloaded file's contents.
 
@@ -101,7 +102,6 @@ All settings are in `config.js`. You can edit it right on GitHub: open the file,
 | `EMAIL_DOMAIN` | Only email addresses ending in this can sign in. Currently `350seattle.org`. |
 | `GOOGLE_AUTH_URL` | Google's sign-in address. Leave as is. |
 | `SHEET_URL` | The newsletter Google Sheet's normal address, shown in step 2. Blank = placeholder. Never a "Publish to web" link. |
-| `BOARD_BASE_URL` | Where newsletter issues live on the 350 website, e.g. `https://350seattle.org/newsletter/`. Only used for the email image link before you publish. |
 | `FONT_BASE_URL` | Where the board's font files are hosted. Leave it as this site's `fonts/` address. |
 | `REAL_FONTS` | Switches for the licensed brand fonts (see below). |
 
@@ -156,7 +156,7 @@ Plain HTML, CSS and JavaScript: no framework, no build step, nothing loaded from
 | `tests/` | Unit tests and browser acceptance checks |
 | `reference/` | The process book, workflow deck, brand guide and images this is based on |
 
-**The Apps Script contract:** every call is a `POST` to `APPS_SCRIPT_URL` with `Content-Type: text/plain` and a JSON body that includes `idToken`, the volunteer's Google ID token. `{"action":"items", idToken}` returns `{ok, issue, items}` (`issue.weekSummary` is optional; if present it pre-fills the weekly summary box); `{"action":"publish", idToken, slug, title, html}` returns `{ok, url, postId}`. On failure: `{ok:false, error}`. If the sign-in is missing, expired or not allowed, return `{ok:false, error:"...", reauth:true}` and the builder asks the volunteer to sign in again.
+**The Apps Script contract:** every call is a `POST` to `APPS_SCRIPT_URL` with `Content-Type: text/plain` and a JSON body that includes `idToken`, the volunteer's Google ID token. `{"action":"items", idToken}` returns `{ok, issue, items}` (`issue.weekSummary` is optional; if present it pre-fills the weekly summary box); `{"action":"publish", idToken, slug, title, html}` publishes a post in the Newsletters category and returns `{ok, url, postId, status}`, where `status` is `"publish"` or `"draft"` (a missing status counts as published; a `?p=` address is treated as a draft). The builder never guesses the address: it uses `url` from this reply. Issue slugs follow past issues, month, two-digit year and "newsletter", e.g. `dec-26-newsletter`; the slug is also the `utm_campaign` on every tracked link. Re-publishing within 45 days updates the post; after that the script refuses with a plain-language `error`. On failure: `{ok:false, error}`. If the sign-in is missing, expired or not allowed, return `{ok:false, error:"...", reauth:true}` and the builder asks the volunteer to sign in again.
 
 **The Apps Script must verify every `idToken` with Google.** The builder only reads the name from it; anyone could send a made-up one. A minimal check:
 
