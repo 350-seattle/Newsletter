@@ -83,7 +83,7 @@ const browser = await puppeteer.launch({
 // --------------------------------------------------------------- helpers
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function newPage({ width = 1280, height = 900, mock = null, downloads = null } = {}) {
+async function newPage({ width = 1280, height = 900, mock = null, downloads = null, notSetUp = false } = {}) {
   const context = await browser.createBrowserContext();
   await context.overridePermissions(ORIGIN, ['clipboard-read', 'clipboard-write', 'clipboard-sanitized-write']);
   const page = await context.newPage();
@@ -96,6 +96,17 @@ async function newPage({ width = 1280, height = 900, mock = null, downloads = nu
     fs.mkdirSync(downloads, { recursive: true });
     const cdp = await page.createCDPSession();
     await cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: downloads, browserContextId: context.id });
+  }
+  if (notSetUp) {
+    // The builder before any setup: no Google client ID, no Sheet address.
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      if (!req.url().startsWith(ORIGIN + '/config.js')) return req.continue();
+      const cfg = fs.readFileSync(path.join(root, 'config.js'), 'utf8')
+        .replace(/GOOGLE_CLIENT_ID: '[^']*'/, "GOOGLE_CLIENT_ID: ''")
+        .replace(/SHEET_URL: '[^']*'/, "SHEET_URL: ''");
+      return req.respond({ status: 200, contentType: 'text/javascript', body: cfg });
+    });
   }
   if (mock) {
     await page.setRequestInterception(true);
@@ -711,8 +722,8 @@ try {
 // Sheet panel placeholder, sign-in not set up, and a non-350 account.
 try {
   const notes = [];
-  // Default config: no Sheet address, no Google client ID yet.
-  const page = await newPage({ width: 1280 });
+  // Before setup: no Sheet address, no Google client ID.
+  const page = await newPage({ width: 1280, notSetUp: true });
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'networkidle0' });
   await page.click('#to-sheet-btn');
   await waitStep(page, 2);

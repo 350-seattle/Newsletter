@@ -10,7 +10,7 @@ window.N350_CONFIG = {
   // Sign-in with a 350 Seattle Google account. The client ID is public
   // (it is not a password). Leave blank until it's set up; see README,
   // "One-time setup: signing in with 350 email".
-  GOOGLE_CLIENT_ID: '',
+  GOOGLE_CLIENT_ID: '197875624232-dcao2v3b8ti4tdj5ja4s5cqlee0qke97.apps.googleusercontent.com',
 
   // Only accounts with this email domain can sign in.
   EMAIL_DOMAIN: '350seattle.org',

@@ -97,3 +97,8 @@ Backend now publishes each issue as a post in the Newsletters category; reply `{
 - [x] README, full test run, commit, push
 
 Also fixed on 2026-11-25: step numbers left over from the five-step change in messages ("fix the problems in step 3" now step 4, "leave items out / write the summary in step 2" now step 3).
+
+### Done: Google sign-in client added (2026-11-25)
+- GOOGLE_CLIENT_ID set in config.js (public ID, not a secret). Checked against Google: the live redirect URI https://350-seattle.github.io/Newsletter/auth-callback.html is accepted; http://localhost:8000/auth-callback.html is NOT registered (only needed for local testing).
+- Browser check 11 now blanks the client ID itself to test the "not set up yet" state.
+- Still open: confirm volunteers sign in with @350seattle.org (EMAIL_DOMAIN); the Apps Script needs the same client ID for its token check.
