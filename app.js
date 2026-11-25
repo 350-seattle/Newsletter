@@ -1186,6 +1186,7 @@
     $all('.nb-step-panel').forEach(function (p) {
       p.hidden = Number(p.getAttribute('data-step')) !== n;
     });
+    if (n !== 2) lockPageScroll(false);
     if (n === 1) updateSignInUi();
     if (n === 2) { updateSignInUi(); loadSheetFrame(); }
     if (n === 3) { fillRecap(); renderArrangeList(); renderPreview('#preview-arrange', false); }
@@ -1221,6 +1222,7 @@
     var mode = !links.ok ? 'placeholder' : (signedIn() ? 'frame' : 'locked');
     if (mode === sheetMode) return;
     sheetMode = mode;
+    lockPageScroll(false); // the frame is being replaced or removed
     var body = $('#sheet-body');
     var link = $('#sheet-link');
     var hadFocus = body.contains(document.activeElement);
@@ -1277,6 +1279,44 @@
     }
     loadSheetFrame();
     if (hadFocus) $('#step-2-title').focus();
+  }
+
+  // ------------------------------------------------------------------
+  // Scrolling over the Sheet scrolls the Sheet, not the page.
+  // When Google's Sheet doesn't use a wheel turn (at its edges, or while
+  // it loads), the browser passes it on to the page. The page can't
+  // reach inside Google's frame, but it does see the pointer arrive on
+  // and leave the frame, so it pauses its own scrolling in between.
+  // Mouse and pen only; touch scrolling is unchanged.
+  // ------------------------------------------------------------------
+  var pageScrollLocked = false;
+
+  function lockPageScroll(lock) {
+    if (lock === pageScrollLocked) return;
+    pageScrollLocked = lock;
+    document.documentElement.classList.toggle('nb-scroll-locked', lock);
+  }
+
+  function isSheetFrame(node) {
+    return !!node && node.id === 'sheet-frame';
+  }
+
+  function wireSheetScrollLock() {
+    var body = $('#sheet-body');
+    body.addEventListener('pointerover', function (event) {
+      if (event.pointerType !== 'touch' && isSheetFrame(event.target)) lockPageScroll(true);
+    });
+    body.addEventListener('pointerout', function (event) {
+      if (isSheetFrame(event.target)) lockPageScroll(false);
+    });
+    // Any pointer movement or wheel the page itself receives means the
+    // pointer is not over the Sheet (those go to Google's frame).
+    document.addEventListener('pointermove', function (event) {
+      if (pageScrollLocked && !isSheetFrame(event.target)) lockPageScroll(false);
+    }, { passive: true });
+    document.addEventListener('wheel', function (event) {
+      if (pageScrollLocked && !isSheetFrame(event.target)) lockPageScroll(false);
+    }, { passive: true });
   }
 
   function onSheetSignIn(event) {
@@ -1344,6 +1384,7 @@
     $('#signout-btn').addEventListener('click', signOut);
     $('#sheet-link').addEventListener('click', onSheetLink);
     $('#sheet-body').addEventListener('click', onSheetSignIn);
+    wireSheetScrollLock();
     listenForSignIn();
     renderSheetPanel();
     updateSignInUi();

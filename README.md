@@ -27,6 +27,8 @@ Click **Sign in with your 350 email**. A small Google window opens; choose your 
 ### 2. Review in the Sheet
 **The newsletter Google Sheet** shows right inside the builder, but only after you sign in with your 350 email (signed out, you'll see a **Sign in** button instead; signing out or the sign-in running out hides it again). Read through this issue's blurbs and tick *Approved* on the ones ready to go. If the Sheet doesn't show or asks you to sign in, use **Open the Google Sheet in a new tab** (some browsers block Google sign-in inside other websites). Until the Sheet's address is added to `config.js`, a placeholder shows instead.
 
+While your mouse is over the Sheet, the mouse wheel scrolls only the Sheet, not the builder page; move the mouse off the Sheet to scroll the page.
+
 When you're done, click **Load approved blurbs**. Only rows ticked *Approved* come through.
 
 ### 3. Arrange

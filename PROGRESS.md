@@ -106,7 +106,8 @@ Also fixed on 2026-11-25: step numbers left over from the five-step change in me
 ### Done: Sheet address added (2026-11-25)
 - SHEET_URL set in config.js. Signed out of Google, the Sheet answers 401 (sharing is restricted, good) and sends no frame-blocking header, so it can show in the step 2 panel for signed-in volunteers with access.
 
-### In progress: page scrolls while the cursor is over the Sheet (requested 2026-11-25)
+### Done: page scrolls while the cursor is over the Sheet (requested 2026-11-25)
 Wheel scrolling over the Sheet frame chains to the page when Google's Sheet doesn't use it. Fix: while a mouse/pen pointer is over the frame (pointerover/pointerout on the iframe, plus any pointermove or wheel in the page outside it), add `nb-scroll-locked` to <html> (overflow hidden; `scrollbar-gutter: stable` so nothing shifts). Unlock on leaving step 2 or when the frame is removed. Touch is unchanged.
-- [ ] e2e check 11: wheel over the Sheet doesn't move the page; wheel elsewhere still does (write first, confirm it fails)
-- [ ] app.js + app.css fix, tests pass, README note, commit
+- [x] e2e check 11: wheel over the Sheet doesn't move the page; wheel elsewhere still does (write first, confirm it fails)
+- [x] app.js + app.css fix, tests pass, README note, commit
+- Result: the browser test reproduced it (page moved 301px under the Sheet); after the fix it moves 0px, the page still scrolls elsewhere, and nothing shifts sideways. 31 unit tests, 12/12 browser checks pass.

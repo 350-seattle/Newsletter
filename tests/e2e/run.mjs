@@ -768,6 +768,26 @@ try {
   await p1.waitForFunction(() => { const f = document.getElementById('sheet-frame'); return f && f.getAttribute('src'); }, { timeout: 15000 });
   const signedInState = await sheetState();
   const focusAfter = await p1.evaluate(() => document.activeElement && document.activeElement.id);
+  // Mouse-wheel over the Sheet must not scroll the page; elsewhere it must.
+  await p1.evaluate(() => window.scrollTo(0, 0));
+  const box = await (await p1.$('#sheet-frame')).boundingBox();
+  const canScroll = await p1.evaluate(() => document.documentElement.scrollHeight > window.innerHeight + 50);
+  await p1.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 300));
+  await sleep(150);
+  for (let i = 0; i < 4; i++) { await p1.mouse.wheel({ deltaY: 300 }); await sleep(120); }
+  await sleep(400);
+  const scrolledOverSheet = await p1.evaluate(() => window.scrollY);
+  const lockedNoShift = await p1.evaluate(() => document.documentElement.clientWidth);
+  await p1.mouse.move(40, 40);
+  await sleep(150);
+  for (let i = 0; i < 4; i++) { await p1.mouse.wheel({ deltaY: 300 }); await sleep(120); }
+  await sleep(400);
+  const scrolledElsewhere = await p1.evaluate(() => window.scrollY);
+  const unlockedWidth = await p1.evaluate(() => document.documentElement.clientWidth);
+  const wheelOk = canScroll && scrolledOverSheet === 0 && scrolledElsewhere > 0 && lockedNoShift === unlockedWidth;
+  notes.push(`wheel over the Sheet leaves the page still: ${scrolledOverSheet === 0} (moved ${scrolledOverSheet}px), wheel elsewhere scrolls the page: ${scrolledElsewhere > 0}, no layout shift: ${lockedNoShift === unlockedWidth}`);
+  if (!wheelOk) sheetResult.ok = false;
+  await p1.evaluate(() => window.scrollTo(0, 0));
   await p1.click('.nb-step[data-step="1"]');
   await waitStep(p1, 1);
   await p1.click('#signout-btn');
