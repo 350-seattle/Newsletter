@@ -24,7 +24,7 @@ window.N350_CONFIG = {
   //   https://docs.google.com/spreadsheets/d/1AbC.../edit#gid=0
   // Leave blank to show a placeholder. Do NOT use a "Publish to web"
   // link: that makes the whole Sheet, emails included, public.
-  SHEET_URL: '',
+  SHEET_URL: 'https://docs.google.com/spreadsheets/d/1PRVrJyunVwsUHnhATthVVm0n0zze3J8ruy3k_uwh9Sc/edit?gid=0#gid=0',
 
   // Where the board's font files are hosted (this site's fonts/ folder).
   // Published boards load fonts from here, so it must be a full https

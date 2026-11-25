@@ -102,3 +102,6 @@ Also fixed on 2026-11-25: step numbers left over from the five-step change in me
 - GOOGLE_CLIENT_ID set in config.js (public ID, not a secret). Checked against Google: the live redirect URI https://350-seattle.github.io/Newsletter/auth-callback.html is accepted; http://localhost:8000/auth-callback.html is NOT registered (only needed for local testing).
 - Browser check 11 now blanks the client ID itself to test the "not set up yet" state.
 - Still open: confirm volunteers sign in with @350seattle.org (EMAIL_DOMAIN); the Apps Script needs the same client ID for its token check.
+
+### Done: Sheet address added (2026-11-25)
+- SHEET_URL set in config.js. Signed out of Google, the Sheet answers 401 (sharing is restricted, good) and sends no frame-blocking header, so it can show in the step 2 panel for signed-in volunteers with access.
