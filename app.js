@@ -41,7 +41,8 @@
       weekSummaryEdited: false,
       step: 1,
       maxStep: 1,
-      publishedUrl: null
+      publishedUrl: null,
+      publishedStatus: null  // 'publish' or 'draft', from the website's reply
     };
   }
 
@@ -85,12 +86,20 @@
     return N350.isHttpUrl(configured) ? configured : localFontBase();
   }
 
+  // The board's address is only known once WordPress sends it back
+  // (post addresses include the date), so it is never guessed.
   function boardUrl() {
-    if (state.publishedUrl) return state.publishedUrl;
-    var base = String(CONFIG.BOARD_BASE_URL || '').trim();
-    if (!N350.isHttpUrl(base) || !state.issue) return null;
-    if (!/\/$/.test(base)) base += '/';
-    return base + encodeURIComponent(state.issue.slug) + '/';
+    return state.publishedUrl || null;
+  }
+
+  // A draft is not public: its link only works for people signed in to
+  // WordPress. A reply without a status counts as published.
+  function isDraft(url, status) {
+    return status === 'draft' || /[?&]p=\d+/.test(String(url || ''));
+  }
+
+  function publishedLive() {
+    return !!state.publishedUrl && state.publishedStatus !== 'draft';
   }
 
   // ------------------------------------------------------------------
@@ -169,6 +178,7 @@
       merged.step = Math.min(Math.max(parseInt(s.step, 10) || 1, 1), 5);
       merged.maxStep = Math.min(Math.max(parseInt(s.maxStep, 10) || 1, merged.step), 5);
       merged.publishedUrl = s.publishedUrl && N350.isHttpUrl(s.publishedUrl) ? s.publishedUrl : null;
+      merged.publishedStatus = merged.publishedUrl ? (isDraft(merged.publishedUrl, s.publishedStatus) ? 'draft' : 'publish') : null;
       merged.weekSummary = typeof s.weekSummary === 'string' ? N350.sanitizeIssue({ weekSummary: s.weekSummary }).issue.weekSummary : '';
       merged.weekSummaryEdited = !!s.weekSummaryEdited;
       return merged;
@@ -294,6 +304,7 @@
     var fid = prev.featured != null ? idOf(prev, prev.featured) : null;
     if (fid != null && keyById[fid] != null) next.featured = keyById[fid];
     next.publishedUrl = prev.publishedUrl;
+    next.publishedStatus = prev.publishedStatus;
     if (prev.weekSummaryEdited) {
       next.weekSummary = prev.weekSummary;
       next.weekSummaryEdited = true;
@@ -799,7 +810,7 @@
     summary.textContent = '';
     if (check.errors.length) {
       summary.appendChild(el('p', { className: 'nb-msg nb-msg--error' }, [
-        el('span', { text: check.errors.length + ' problem' + (check.errors.length > 1 ? 's' : '') + ' must be fixed before publishing. Fix them in the Google Sheet and load again, or leave those items out in step 2.' })
+        el('span', { text: check.errors.length + ' problem' + (check.errors.length > 1 ? 's' : '') + ' must be fixed before publishing. Fix them in the Google Sheet and load again, or leave those items out in step 3.' })
       ]));
     } else {
       summary.appendChild(el('p', { className: 'nb-msg nb-msg--success' }, [
@@ -858,7 +869,7 @@
 
     if (check.errors.length) {
       publishBtn.setAttribute('aria-disabled', 'true');
-      note.textContent = 'Publishing is turned off until the problems in step 3 are fixed. You can still download the HTML to look at it.';
+      note.textContent = 'Publishing is turned off until the problems in step 4 are fixed. You can still download the HTML to look at it.';
     } else if (state.demo) {
       publishBtn.removeAttribute('aria-disabled');
       note.textContent = 'Sample mode: nothing will be sent to the website. You\'ll see what happens after a real publish.';
@@ -868,15 +879,28 @@
     }
     $('#publish-signin-note').hidden = state.demo || signedIn();
 
+    var draft = !!state.publishedUrl && state.publishedStatus === 'draft';
     if (state.publishedUrl) {
       $('#publish-result').hidden = false;
       $('#published-url').value = state.publishedUrl;
+      $('#published-label-text').textContent = draft
+        ? 'Draft preview link (only works while you\'re signed in to WordPress)'
+        : 'The board is published at';
+      $('#draft-badge').hidden = !draft;
     } else {
       $('#publish-result').hidden = true;
+      $('#published-url').value = '';
     }
 
+    // The email's image link only exists once the board is public.
     var email = currentEmail();
-    $('#preview-link').value = email.previewUrl || 'Set BOARD_BASE_URL in config.js';
+    var live = publishedLive() && !!email.previewUrl;
+    $('#preview-link-row').hidden = !live;
+    $('#preview-link').value = live ? email.previewUrl : '';
+    $('#preview-link-wait').hidden = live;
+    $('#preview-link-wait').textContent = draft
+      ? 'The board is only a draft on the website, so there\'s no public link for the email yet. The link appears here once the board is published.'
+      : 'Publish first. The link appears here once the board is published.';
     $('#preview-alt').value = N350.previewAltText(state.issue, items);
     $('#email-text').value = email.text;
   }
@@ -884,7 +908,7 @@
   function askToPublish() {
     var btn = $('#publish-btn');
     if (btn.getAttribute('aria-disabled') === 'true') {
-      if (!btn.dataset.busy) showMessage('error', 'Publishing is turned off until the problems in step 3 are fixed.');
+      if (!btn.dataset.busy) showMessage('error', 'Publishing is turned off until the problems in step 4 are fixed.');
       return;
     }
     if (!state.demo && !signedIn()) {
@@ -900,7 +924,7 @@
     var dialog = $('#confirm-dialog');
     $('#confirm-body').textContent = state.demo
       ? 'This is sample mode, so nothing will actually be published. Continue to see what happens after publishing?'
-      : 'This puts "' + (state.issue.title || 'this issue') + '" (' + includedItems().length + ' items) on the 350 website. If this issue was published before, the website decides whether to update it.';
+      : 'This puts "' + (state.issue.title || 'this issue') + '" (' + includedItems().length + ' items) on the 350 website. If this issue was published in the last 45 days, this updates it instead of making a second one.';
     dialog.returnValue = '';
     dialog.showModal();
     $('#confirm-yes').focus();
@@ -916,7 +940,8 @@
     var btn = $('#publish-btn');
     var fragment = renderBoard(true).fragment;
     if (state.demo) {
-      state.publishedUrl = boardUrl() || 'https://example.org/newsletter/' + encodeURIComponent(state.issue.slug) + '/';
+      state.publishedUrl = sampleBoardUrl();
+      state.publishedStatus = 'publish';
       save();
       renderShare();
       showMessage('success', 'Sample mode: nothing was sent. In real use, the link to the new post appears below, ready to copy.');
@@ -937,10 +962,14 @@
       html: fragment
     }).then(function (data) {
       if (typeof data.url !== 'string' || !N350.isHttpUrl(data.url)) throw new UserError(MSG.badShape);
+      var draft = isDraft(data.url, data.status);
       state.publishedUrl = data.url;
+      state.publishedStatus = draft ? 'draft' : 'publish';
       save();
       renderShare();
-      showMessage('success', 'Published! The board is live. Copy the link below for the email.');
+      showMessage('success', draft
+        ? 'Saved as a draft on the website. It isn\'t public yet, and this link only works while you\'re signed in to WordPress.'
+        : 'Published! The board is live on the website. Copy its link below; the image link for the email is now ready in B.');
       $('#published-url').focus();
     }).catch(function (err) {
       showMessage('error', asUserError(err) + ' If it keeps failing, use "Download HTML" and paste the board into WordPress yourself.');
@@ -950,8 +979,19 @@
     });
   }
 
+  // Sample mode only: a made-up address shaped like a real post's,
+  // with the issue date in it.
+  function sampleBoardUrl() {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(state.issue.date || ''));
+    var d = m ? m[1] + '/' + m[2] + '/' + m[3] : new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+    return 'https://example.org/' + d + '/' + (N350.slugify(state.issue.slug) || 'newsletter') + '/';
+  }
+
+  // File names: "dec-26-newsletter.html", or "newsletter-<slug>.html"
+  // when the slug doesn't already say newsletter.
   function fileSlug() {
-    return N350.slugify(state.issue && state.issue.slug) || 'newsletter';
+    var slug = N350.slugify(state.issue && state.issue.slug) || 'newsletter';
+    return /(^|-)newsletter(-|$)/.test(slug) ? slug : 'newsletter-' + slug;
   }
 
   function downloadBlob(blob, name) {
@@ -966,7 +1006,7 @@
 
   function downloadHtml() {
     var fragment = renderBoard(true).fragment;
-    var name = 'newsletter-' + fileSlug() + '.html';
+    var name = fileSlug() + '.html';
     downloadBlob(new Blob([fragment], { type: 'text/html;charset=utf-8' }), name);
     $('#html-status').textContent = 'Downloaded ' + name + '.';
   }
@@ -1023,13 +1063,13 @@
     }).then(function (png) {
       if (png.width !== PNG_WIDTH * PNG_RATIO) throw new Error('size');
       return fetch(png.dataUrl).then(function (r) { return r.blob(); }).then(function (blob) {
-        var name = 'newsletter-' + fileSlug() + '-preview.png';
+        var name = fileSlug() + '-preview.png';
         downloadBlob(blob, name);
         status.textContent = 'Downloaded ' + name + ' (' + png.width + ' × ' + png.height + ' pixels).' +
           (external ? ' If any photo shows as a plain blue box, that website doesn\'t allow its pictures to be copied; the published board still shows it.' : '');
       });
     }).catch(function () {
-      status.textContent = 'The image couldn\'t be made. Try again, or take a screenshot of the preview in step 3 instead.';
+      status.textContent = 'The image couldn\'t be made. Try again, or take a screenshot of the preview in step 4 instead.';
     }).then(function () {
       stage.textContent = '';
       stage.removeAttribute('inert');
@@ -1160,7 +1200,7 @@
   }
 
   // ------------------------------------------------------------------
-  // The newsletter Google Sheet, shown in step 1. The builder never
+  // The newsletter Google Sheet, shown in step 2. The builder never
   // reads it: Google shows it inside the frame only to people the Sheet
   // is shared with.
   // ------------------------------------------------------------------

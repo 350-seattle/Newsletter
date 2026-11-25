@@ -26,12 +26,6 @@ window.N350_CONFIG = {
   // link: that makes the whole Sheet, emails included, public.
   SHEET_URL: '',
 
-  // Where published issues live on the WordPress site. The issue slug is
-  // added to the end, e.g. https://350seattle.org/newsletter/2026-12/
-  // Only used for the email image link before you publish; after
-  // publishing, the builder uses the address WordPress sends back.
-  BOARD_BASE_URL: 'https://350seattle.org/newsletter/',
-
   // Where the board's font files are hosted (this site's fonts/ folder).
   // Published boards load fonts from here, so it must be a full https
   // address. Blank = the fonts/ folder next to this page.

@@ -144,7 +144,7 @@
           <p class="nb-help" id="publish-signin-note" hidden>You'll be asked to sign in with your 350 email first.</p>
           <button type="button" class="nb-btn" id="publish-btn">Publish to website…</button>
           <div id="publish-result" class="nb-result" hidden>
-            <label class="nb-label" for="published-url">The board is published at</label>
+            <label class="nb-label" for="published-url"><span id="published-label-text">The board is published at</span> <span class="nb-badge nb-badge--draft" id="draft-badge" hidden>Draft</span></label>
             <div class="nb-copy-row">
               <input class="nb-input" id="published-url" type="text" readonly>
               <button type="button" class="nb-btn nb-btn--secondary" data-copy="published-url">Copy link</button>
@@ -157,9 +157,10 @@
           <p class="nb-help">A picture of the board (1200 pixels wide) to put at the top of the EveryAction email.</p>
           <button type="button" class="nb-btn" id="png-btn">Download preview image</button>
           <p class="nb-status" id="png-status" role="status"></p>
-          <label class="nb-label" for="preview-link">Link for the image (paste as the image's link)</label>
-          <div class="nb-copy-row">
-            <input class="nb-input" id="preview-link" type="text" readonly>
+          <p class="nb-label" id="preview-link-label">Link for the image (paste as the image's link)</p>
+          <p class="nb-help nb-wait" id="preview-link-wait" aria-live="polite">Publish first. The link appears here once the board is published.</p>
+          <div class="nb-copy-row" id="preview-link-row" hidden>
+            <input class="nb-input" id="preview-link" type="text" readonly aria-labelledby="preview-link-label">
             <button type="button" class="nb-btn nb-btn--secondary" data-copy="preview-link">Copy</button>
           </div>
           <label class="nb-label" for="preview-alt">Alt text for the image</label>

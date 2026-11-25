@@ -18,7 +18,8 @@ const extra = [
     link: 'https://example.org/x?q=a+b' }
 ];
 const all = items.concat(N350.sanitizeItems(extra).items);
-const BOARD = 'https://350seattle.org/newsletter/2026-12/';
+// Published boards are WordPress posts, with the date in the address.
+const BOARD = 'https://350seattle.org/2026/12/06/dec-26-newsletter/';
 
 function params(url) {
   return Object.fromEntries(new URL(url).searchParams.entries());
@@ -56,7 +57,7 @@ test('email "Read more" links follow the rules', () => {
     expectTagged(l.url, item.link, {
       utm_source: 'everyaction',
       utm_medium: 'email',
-      utm_campaign: '2026-12',
+      utm_campaign: 'dec-26-newsletter',
       utm_content: N350.slugify(item.team) + '-' + item.id
     });
   });
@@ -88,9 +89,9 @@ test('email is grouped by category with a heading for each', () => {
 test('preview image link follows the rules', () => {
   const email = N350.buildEmail(issue, items, BOARD);
   assert.equal(email.previewUrl,
-    'https://350seattle.org/newsletter/2026-12/?utm_source=everyaction&utm_medium=email&utm_campaign=2026-12&utm_content=preview-image');
+    'https://350seattle.org/2026/12/06/dec-26-newsletter/?utm_source=everyaction&utm_medium=email&utm_campaign=dec-26-newsletter&utm_content=preview-image');
   const withQuery = N350.previewImageLink(issue, 'https://example.org/?p=123');
-  assert.equal(withQuery, 'https://example.org/?p=123&utm_source=everyaction&utm_medium=email&utm_campaign=2026-12&utm_content=preview-image');
+  assert.equal(withQuery, 'https://example.org/?p=123&utm_source=everyaction&utm_medium=email&utm_campaign=dec-26-newsletter&utm_content=preview-image');
 });
 
 test('links inside the board follow the rules', () => {
@@ -104,7 +105,7 @@ test('links inside the board follow the rules', () => {
     expectTagged(href, item.link, {
       utm_source: 'website',
       utm_medium: 'newsletter-board',
-      utm_campaign: '2026-12',
+      utm_campaign: 'dec-26-newsletter',
       utm_content: N350.slugify(item.team) + '-' + item.id
     });
   });
@@ -128,4 +129,13 @@ test('weekly summary sits at the top of the email and adds no links', () => {
   assert.ok(email.html.indexOf('Lots happening.') < email.html.indexOf(N350.escapeHtml(items[0].category)));
   assert.equal(email.links.length, items.length, 'no extra links');
   assert.deepEqual(email.text.match(/https?:\/\/\S+/g), email.links.map((l) => l.url));
+});
+
+test('before publishing there is no board link: nothing is guessed', () => {
+  const email = N350.buildEmail(issue, items, null);
+  assert.equal(email.previewUrl, null);
+  const boardish = /350seattle\.org\/(newsletter|\d{4}\/)|utm_content=preview-image/;
+  assert.ok(!boardish.test(email.text), 'no board link in the email text');
+  assert.ok(!boardish.test(email.html), 'no board link in the email HTML');
+  assert.equal(issue.slug, 'dec-26-newsletter', 'sample slug follows the month-year-newsletter style');
 });

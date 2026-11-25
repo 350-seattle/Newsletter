@@ -224,7 +224,7 @@
     items = items || [];
 
     if (!items.length) {
-      errors.push({ id: null, message: 'No items are included. Include at least one item in step 2.' });
+      errors.push({ id: null, message: 'No items are included. Include at least one item in step 3.' });
     }
 
     items.forEach(function (item) {
@@ -257,7 +257,7 @@
 
     var recap = weekSummaryOf(issue);
     if (!recap) {
-      warnings.push({ id: null, field: 'weekSummary', message: 'There is no weekly summary yet. Add a few sentences about everything happening this week in step 2.' });
+      warnings.push({ id: null, field: 'weekSummary', message: 'There is no weekly summary yet. Add a few sentences about everything happening this week in step 3.' });
     } else {
       var recapWords = wordCount(recap);
       if (recapWords > RECAP_MAX_WORDS) {
