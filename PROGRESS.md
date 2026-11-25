@@ -86,3 +86,12 @@ New order: 1 Sign in, 2 Review in the Sheet (+ "Load approved blurbs" at the bot
 - [x] app.js renderSheetPanel: three modes, placeholder (no SHEET_URL) / locked (signed out: sign-in button, no iframe, no Sheet link anywhere) / frame (signed in). Re-render only when the mode changes; sign-out and expiry (timer at exp) remove the iframe
 - [x] e2e check 11: locked with SHEET_URL set and signed out (no iframe, no docs.google.com request), unlocks after signing in from the panel, locks again on sign out
 - [x] README; commit
+
+### In progress: publishing as WordPress posts (requested 2026-11-25)
+Backend now publishes each issue as a post in the Newsletters category; reply `{ok, url, postId, status}` ("publish" | "draft"); dated addresses (e.g. /2026/12/06/dec-26-newsletter/); drafts return `?p=123` preview links; slugs like `dec-26-newsletter`; re-publish updates within 45 days, refused after (plain error).
+- [ ] Remove BOARD_BASE_URL (config, README, app). `boardUrl()` = `state.publishedUrl` or null. Step 5 image link: "Publish first…" message until published (live); no guessed link anywhere
+- [ ] `status`: draft (or `?p=` in url) → draft message + "Draft" label, never "live", no image link for the email; missing status = published. Saved as `state.publishedStatus`
+- [ ] Demo: made-up dated example.org address. Confirm dialog: 45-day wording
+- [ ] Slugs `dec-26-newsletter` in sample data, docs, tests (utm_campaign); download names avoid "newsletter-…-newsletter"
+- [ ] Tests: utm.test, e2e mock reply with dated url + status; new e2e check 12 (no link before publishing; draft message; live message + link)
+- [ ] README, full test run, commit, push
