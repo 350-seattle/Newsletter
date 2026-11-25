@@ -256,7 +256,7 @@ try {
   await page.click('#step-4 [data-goto="5"]');
   await waitStep(page, 5);
   await page.click('#html-btn');
-  fragmentFile = await waitForFile(dl, /^newsletter-.*\.html$/);
+  fragmentFile = await waitForFile(dl, /newsletter.*\.html$/);
   await page.click('#png-btn');
   pngFile = await waitForFile(dl, /\.png$/, 40000);
   await page.click('#email-btn');
@@ -300,7 +300,7 @@ try {
     emailCopied: /Copied!/.test(emailStatus),
     clipboardHasHtmlAndText: !!(clip.types && clip.types.includes('text/html') && clip.types.includes('text/plain') && /utm_source=everyaction/.test(clip.html)),
     emailTextShowsUrls: /Read more: https:\/\/example\.org\/.*utm_source=everyaction/.test(emailText),
-    samplePublishShowsUrl: /^https:\/\/.*2026-12\/$/.test(pubUrl),
+    samplePublishShowsUrl: pubUrl === 'https://example.org/2026/12/01/dec-26-newsletter/',
     noPageErrors: !page.consoleLog.some((l) => l.startsWith('PAGEERROR'))
   };
   const failed = Object.entries(checks).filter(([, v]) => !v).map(([k]) => k);
@@ -478,7 +478,7 @@ try {
   const urls = text.match(/https?:\/\/\S+/g) || [];
   const bad = urls.filter((u) => {
     const p = new URL(u).searchParams;
-    return p.get('utm_source') !== 'everyaction' || p.get('utm_medium') !== 'email' || p.get('utm_campaign') !== '2026-12' ||
+    return p.get('utm_source') !== 'everyaction' || p.get('utm_medium') !== 'email' || p.get('utm_campaign') !== 'dec-26-newsletter' ||
       !/^[a-z0-9-]+-row-\d+$/.test(p.get('utm_content') || '');
   });
   record(7, 'Email text UTM links follow the rules', urls.length >= 7 && bad.length === 0,
@@ -507,7 +507,10 @@ try {
         if (mode === 'publish-500') return { status: 500, contentType: 'text/html', body: '<h1>Server error</h1>' };
         if (mode === 'publish-html') return { status: 200, contentType: 'text/html', body: '<!doctype html><title>Sign in</title>' };
         if (mode === 'publish-fail') return { body: JSON.stringify({ ok: false, error: 'WordPress rejected the post.' }) };
-        return { body: JSON.stringify({ ok: true, url: 'https://350seattle.org/newsletter/2026-12/', postId: 123 }) };
+        if (mode === 'publish-old') return { body: JSON.stringify({ ok: false, error: 'This issue was published more than 45 days ago, so it can\'t be updated. Make a new issue instead.' }) };
+        if (mode === 'publish-draft') return { body: JSON.stringify({ ok: true, url: 'https://350seattle.org/?p=123', postId: 123, status: 'draft' }) };
+        if (mode === 'publish-nostatus') return { body: JSON.stringify({ ok: true, url: 'https://350seattle.org/2026/12/06/dec-26-newsletter/', postId: 123 }) };
+        return { body: JSON.stringify({ ok: true, url: 'https://350seattle.org/2026/12/06/dec-26-newsletter/', postId: 123, status: 'publish' }) };
       }
       return { body: JSON.stringify({ ok: false, error: 'unknown' }) };
     }
@@ -538,6 +541,22 @@ try {
   const orderOf = () => page.$$eval('#arrange-list .nb-item-headline', (e) => e.map((x) => x.textContent).join('|'));
   const order0 = await orderOf();
 
+  // CHECK 12 (a): before publishing there is no board link anywhere.
+  await page.click('.nb-step[data-step="5"]');
+  await waitStep(page, 5);
+  const beforePublish = await page.evaluate(() => {
+    const dom = document.documentElement.outerHTML;
+    const fields = Array.from(document.querySelectorAll('input, textarea')).map((i) => i.value).join('\n');
+    const wait = document.getElementById('preview-link-wait');
+    return {
+      noGuess: !/350seattle\.org\/(newsletter|\d{4}\/)|utm_content=preview-image/.test(dom + fields + sessionStorage.getItem('n350-arrangement')),
+      waitShown: !wait.hidden && wait.getBoundingClientRect().height > 0 && /^Publish first\. The link appears here once the board is published\.$/.test(wait.textContent),
+      rowHidden: document.getElementById('preview-link-row').getBoundingClientRect().height === 0,
+      resultHidden: document.getElementById('publish-result').hidden
+    };
+  });
+  const check12 = { before: beforePublish };
+
   const scenarios = [];
   // Each attempt must read its own message, not the previous one.
   const clearMessages = () => page.evaluate(() => { document.getElementById('messages').textContent = ''; });
@@ -565,6 +584,7 @@ try {
   await tryPublish('publish-500', /error 500/);
   await tryPublish('publish-html', /something unexpected/);
   await tryPublish('publish-fail', /WordPress rejected the post/);
+  await tryPublish('publish-old', /more than 45 days ago/);
   await page.setOfflineMode(true);
   await tryPublish('offline', /offline|couldn't reach/i);
   // reloading the blurbs while offline also keeps everything
@@ -587,15 +607,50 @@ try {
   record(9, 'Server error or offline: plain message, arrangement kept', failed9.length === 0,
     scenarios.map((s) => `${s.ok ? 'ok' : 'BAD'} ${s.m} → "${s.msg.slice(0, 70)}…"`).join(' | '));
 
-  // successful publish, then look for the token everywhere
-  mode = 'ok';
-  await page.click('.nb-step[data-step="5"]');
-  await waitStep(page, 5);
-  await page.click('#publish-btn');
-  await page.waitForSelector('#confirm-dialog[open]');
-  await page.click('#confirm-yes');
-  await page.waitForFunction(() => !document.getElementById('publish-result').hidden, { timeout: 10000 });
-  const publishedUrl = await page.$eval('#published-url', (e) => e.value);
+  // CHECK 12 (b): a draft reply says draft, never "live", and gives no email link.
+  async function publishAs(m) {
+    mode = m;
+    await page.click('.nb-step[data-step="5"]');
+    await waitStep(page, 5);
+    await clearMessages();
+    await page.click('#publish-btn');
+    await page.waitForSelector('#confirm-dialog[open]');
+    const confirmText = await page.$eval('#confirm-body', (e) => e.textContent);
+    await page.click('#confirm-yes');
+    await page.waitForFunction(() => document.querySelector('#messages .nb-msg--success'), { timeout: 10000 });
+    return page.evaluate((confirmText) => ({
+      confirmText,
+      msg: document.querySelector('#messages .nb-msg--success').textContent.replace('Dismiss', '').trim(),
+      url: document.getElementById('published-url').value,
+      label: document.getElementById('published-label-text').textContent,
+      draftBadge: !document.getElementById('draft-badge').hidden && document.getElementById('draft-badge').getBoundingClientRect().height > 0,
+      previewLink: document.getElementById('preview-link').value,
+      rowShown: document.getElementById('preview-link-row').getBoundingClientRect().height > 0,
+      wait: document.getElementById('preview-link-wait').hidden ? '' : document.getElementById('preview-link-wait').textContent
+    }), confirmText);
+  }
+  check12.draft = await publishAs('publish-draft');
+  check12.noStatus = await publishAs('publish-nostatus');
+
+  // CHECK 12 (c), and the successful publish used by check 8 below.
+  check12.live = await publishAs('ok');
+  const publishedUrl = check12.live.url;
+  const d = check12.draft, n = check12.noStatus, l = check12.live, b = check12.before;
+  const draftOk = d.msg === 'Saved as a draft on the website. It isn\'t public yet, and this link only works while you\'re signed in to WordPress.' &&
+    !/live/i.test(d.msg) && d.draftBadge && /^Draft preview link/.test(d.label) && d.url === 'https://350seattle.org/?p=123' &&
+    !d.rowShown && d.previewLink === '' && /only a draft/.test(d.wait);
+  const liveOk = /^Published! The board is live/.test(l.msg) && !l.draftBadge && l.label === 'The board is published at' &&
+    l.url === 'https://350seattle.org/2026/12/06/dec-26-newsletter/' && l.rowShown &&
+    l.previewLink === 'https://350seattle.org/2026/12/06/dec-26-newsletter/?utm_source=everyaction&utm_medium=email&utm_campaign=dec-26-newsletter&utm_content=preview-image' &&
+    /last 45 days, this updates it instead of making a second one/.test(l.confirmText);
+  const noStatusOk = /^Published! The board is live/.test(n.msg) && !n.draftBadge && n.rowShown;
+  const beforeOk = b.noGuess && b.waitShown && b.rowHidden && b.resultHidden;
+  record(12, 'Publishing as a post: no early link, draft vs live', beforeOk && draftOk && liveOk && noStatusOk,
+    `before publishing: no guessed link ${b.noGuess}, "Publish first" shown ${b.waitShown}` +
+    `; draft: "${d.msg}" + Draft label ${d.draftBadge}, no email link ${!d.rowShown}` +
+    `; no status counts as live ${noStatusOk}` +
+    `; live: "${l.msg.slice(0, 40)}…", link ${l.url}, image link filled ${l.rowShown}` +
+    (beforeOk && draftOk && liveOk && noStatusOk ? '' : ' :: ' + JSON.stringify(check12)));
   await page.click('#html-btn');
   const html = await waitForFile(dl, /\.html$/);
   const where = await page.evaluate(() => {
