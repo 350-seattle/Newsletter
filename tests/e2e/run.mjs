@@ -320,7 +320,26 @@ try {
   if (pngFile) {
     const size = pngSize(pngFile);
     fs.copyFileSync(pngFile, path.join(out, 'preview.png'));
-    record(6, 'PNG is 1200 px wide', size && size.width === 1200, size ? `${size.width} × ${size.height}px (600 CSS px at 2x); saved tests/e2e/output/preview.png` : 'not a PNG');
+    // Only the tile panel: just inside its top and bottom edges is the panel's
+    // Foggy background (#E8E6E0), and its dark border is at the very edge.
+    // With the masthead or summary included, those spots would be white.
+    const px = await page.evaluate(async (b64) => {
+      const img = new Image();
+      img.src = 'data:image/png;base64,' + b64;
+      await img.decode();
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const at = (x, y) => Array.from(ctx.getImageData(x, y, 1, 1).data.slice(0, 3));
+      const mid = Math.floor(img.naturalWidth / 2);
+      return { topInside: at(mid, 20), bottomInside: at(mid, img.naturalHeight - 20), topEdge: at(mid, 1), bottomEdge: at(mid, img.naturalHeight - 2) };
+    }, fs.readFileSync(pngFile).toString('base64'));
+    const near = (rgb, hex, tol = 6) => rgb.every((v, i) => Math.abs(v - parseInt(hex.slice(i * 2, i * 2 + 2), 16)) <= tol);
+    const tilesOnly = near(px.topInside, 'E8E6E0') && near(px.bottomInside, 'E8E6E0') && near(px.topEdge, '1D1D1B', 40) && near(px.bottomEdge, '1D1D1B', 40);
+    record(6, 'PNG is 1200 px wide (news board tiles only)', size && size.width === 1200 && tilesOnly,
+      size ? `${size.width} × ${size.height}px (600 CSS px at 2x); starts and ends on the tile panel, no masthead or summary: ${tilesOnly}` +
+        (tilesOnly ? '' : ' ' + JSON.stringify(px)) + '; saved tests/e2e/output/preview.png' : 'not a PNG');
   } else {
     record(6, 'PNG is 1200 px wide', false, 'no PNG downloaded');
   }

@@ -1036,18 +1036,32 @@
     stage.setAttribute('inert', '');
     stage.innerHTML = renderBoard(false).fragment.replace(/ loading="lazy"/g, '');
     var board = stage.querySelector('.n350-board');
+    // The image is only the news board itself: the rounded panel of tiles.
+    // No masthead, date, "News Board" heading or "In summary…".
+    $all('.n350-masthead, .n350-heading, .n350-recap', board).forEach(function (n) { n.style.display = 'none'; });
     board.style.width = PNG_WIDTH + 'px';
     board.style.maxWidth = PNG_WIDTH + 'px';
+    board.style.padding = '0';
+    // Capture a plain white wrapper around the panel: the image tool paints
+    // its background colour onto the captured element, which would hide the
+    // panel's own Foggy background. White then only shows past the panel's
+    // rounded corners.
+    var panel = board.querySelector('.n350-grid');
+    var grid = document.createElement('div');
+    grid.style.background = '#FFFFFF';
+    grid.style.width = PNG_WIDTH + 'px';
+    panel.parentNode.insertBefore(grid, panel);
+    grid.appendChild(panel);
     var external = $all('img', board).some(function (img) {
       return new URL(img.src).origin !== window.location.origin;
     });
 
     Promise.resolve(document.fonts ? document.fonts.ready : null).then(function () {
-      return waitForImages(board);
+      return waitForImages(grid);
     }).then(function () {
-      return window.htmlToImage.toPng(board, {
+      return window.htmlToImage.toPng(grid, {
         width: PNG_WIDTH,
-        height: Math.ceil(board.getBoundingClientRect().height),
+        height: Math.ceil(grid.getBoundingClientRect().height),
         pixelRatio: PNG_RATIO,
         backgroundColor: '#FFFFFF',
         cacheBust: false,

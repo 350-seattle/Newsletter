@@ -117,7 +117,8 @@ Wheel scrolling over the Sheet frame chains to the page when Google's Sheet does
 - Earlier the deployment was limited (answered 401 "Page Not Found"); fixed by redeploying with Who has access: Anyone.
 - Next: a real end-to-end run (sign in, load approved blurbs, publish as draft, check on WordPress).
 
-### In progress: preview image = news board tiles only (requested 2026-11-27)
-- [ ] makePng captures only `.n350-grid` (the rounded tile panel) at 600 CSS px, 2x = 1200 px; no masthead, date, "News Board" heading or "In summary…"
-- [ ] help text + README; e2e check 6 also checks the image starts and ends inside the tile panel (Foggy background), not on the white masthead/summary
-- [ ] tests, commit
+### Done: preview image = news board tiles only (requested 2026-11-27)
+- [x] makePng captures only `.n350-grid` (the rounded tile panel) at 600 CSS px, 2x = 1200 px; no masthead, date, "News Board" heading or "In summary…"
+- [x] help text + README; e2e check 6 also checks the image starts and ends inside the tile panel (Foggy background), not on the white masthead/summary
+- [x] tests, commit
+- Note: the image tool paints its background colour onto the captured element, so the panel is wrapped in a white div and the wrapper is captured (otherwise the Foggy panel came out white). Result 1200 x 2568 px for the sample. 31 unit tests, 12/12 browser checks.
