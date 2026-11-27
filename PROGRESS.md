@@ -122,3 +122,9 @@ Wheel scrolling over the Sheet frame chains to the page when Google's Sheet does
 - [x] help text + README; e2e check 6 also checks the image starts and ends inside the tile panel (Foggy background), not on the white masthead/summary
 - [x] tests, commit
 - Note: the image tool paints its background colour onto the captured element, so the panel is wrapped in a white div and the wrapper is captured (otherwise the Foggy panel came out white). Result 1200 x 2568 px for the sample. 31 unit tests, 12/12 browser checks.
+
+### In progress: full EveryAction email HTML (requested 2026-11-27)
+Builder writes a complete email per issue: masthead + issue title, the board image (links to the published board), "In summary…" + weekly summary, items by category (headline, summary, Read more), and a bottom button to the newsletter on the website.
+- [ ] render-board.js `buildEmailHtml(issue, items, {boardUrl, imageUrl, imageAlt})`: full email document, tables + inline styles, 600px, escaped, https image only; button link `utm_content=newsletter-button` (everyaction/email/<slug>); image link = preview-image rule; items = existing Read more rule
+- [ ] step 5 card "E. Email for EveryAction": image-address field (uploaded PNG's https address, saved in session), Copy email HTML, Download email HTML, sandboxed preview; disabled with a plain reason until the board is published (live) and the image address is set
+- [ ] tests: unit (structure, safety, UTM rules incl. button), e2e (live publish → image address → download → links); README; commit
