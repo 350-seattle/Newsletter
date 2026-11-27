@@ -682,7 +682,52 @@ try {
     `; live: "${l.msg.slice(0, 40)}…", link ${l.url}, image link filled ${l.rowShown}` +
     (beforeOk && draftOk && liveOk && noStatusOk ? '' : ' :: ' + JSON.stringify(check12)));
   await page.click('#html-btn');
-  const html = await waitForFile(dl, /\.html$/);
+  const html = await waitForFile(dl, /newsletter\.html$/);
+
+  // CHECK 13: the whole EveryAction email (published live, image address added)
+  const emailNoImage = await page.evaluate(() => ({
+    disabled: document.getElementById('email-html-copy').getAttribute('aria-disabled') === 'true',
+    wait: document.getElementById('email-html-wait').textContent
+  }));
+  const IMG = 'https://example.org/uploads/dec-26-board.png';
+  await page.type('#email-image-url', IMG);
+  await sleep(250);
+  const emailReady = await page.evaluate(() => ({
+    disabled: document.getElementById('email-html-copy').getAttribute('aria-disabled') === 'true',
+    waitHidden: document.getElementById('email-html-wait').hidden,
+    preview: document.getElementById('email-preview').getAttribute('srcdoc') || '',
+    included: document.querySelectorAll('#arrange-list input[id^="inc-"]:checked').length
+  }));
+  await page.click('#email-html-download');
+  const emailFile = await waitForFile(dl, /-email\.html$/);
+  const eh = emailFile ? fs.readFileSync(emailFile, 'utf8') : '';
+  if (emailFile) fs.copyFileSync(emailFile, path.join(out, 'everyaction-email.html'));
+  const POST = 'https://350seattle.org/2026/12/06/dec-26-newsletter/';
+  const tag = (c) => POST + '?utm_source=everyaction&amp;utm_medium=email&amp;utm_campaign=dec-26-newsletter&amp;utm_content=' + c;
+  const emailChecks = {
+    offWithoutImage: emailNoImage.disabled && /image/.test(emailNoImage.wait),
+    onWithImage: !emailReady.disabled && emailReady.waitHidden && emailReady.preview.includes('src="' + IMG + '"'),
+    downloaded: !!emailFile && /^<!doctype html>/.test(eh),
+    title: /<h1[^>]*>350 Seattle<\/h1>/.test(eh) && eh.includes('December 2026'),
+    imageLinksToBoard: eh.includes('<a href="' + tag('preview-image') + '" target="_blank" style="display:block;text-decoration:none;"><img src="' + IMG + '"'),
+    summaryAndItems: /In summary&hellip;/.test(eh) && (eh.match(/>Read more<\/a>/g) || []).length === emailReady.included,
+    buttonLast: eh.includes('<a href="' + tag('newsletter-button') + '"') && eh.lastIndexOf('newsletter-button') > eh.lastIndexOf('Read more'),
+    noEmails: !/team\.lead@|organizer@/.test(eh)
+  };
+  const emailFailed = Object.entries(emailChecks).filter(([, v]) => !v).map(([k]) => k);
+  // Picture of the email for a visual check
+  if (eh) {
+    const shot = await newPage({ width: 700, height: 900 });
+    // The test image address doesn't exist; show the real board image instead.
+    const realPng = pngFile && fs.existsSync(pngFile) ? 'data:image/png;base64,' + fs.readFileSync(pngFile).toString('base64') : IMG;
+    await shot.setContent(eh.split(IMG).join(realPng), { waitUntil: 'load' });
+    await shot.screenshot({ path: path.join(out, 'everyaction-email.png'), fullPage: true });
+    await shot.browserContext().close();
+  }
+  record(13, 'Whole EveryAction email: title, linked board image, summary, button', emailFailed.length === 0,
+    emailFailed.length ? 'failed: ' + emailFailed.join(', ') + ' :: wait="' + emailNoImage.wait + '"'
+      : `off until the image address is added ("${emailNoImage.wait.slice(0, 50)}…"); image links to the board (preview-image), ${emailReady.included} "Read more" links, button last (newsletter-button); saved tests/e2e/output/everyaction-email.html and .png`);
+
   const where = await page.evaluate(() => {
     const ls = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); ls[k] = localStorage.getItem(k); }
     const ss = {}; for (let i = 0; i < sessionStorage.length; i++) { const k = sessionStorage.key(i); ss[k] = sessionStorage.getItem(k); }
@@ -701,6 +746,7 @@ try {
   if (has(where.dom) || has(where.inputs)) leaks.push('page');
   if (has(page.consoleLog.join('\n'))) leaks.push('console');
   if (html && has(fs.readFileSync(html, 'utf8'))) leaks.push('downloaded HTML');
+  if (eh && has(eh)) leaks.push('email HTML');
   if (/volunteer@350seattle\.org/.test(where.dom)) leaks.push('signed-in email shown on page');
   const sentInBody = issued.length === 1 && page.requests.every((r) => r.method === 'POST' &&
     JSON.parse(r.body).idToken === issued[0] && !('token' in JSON.parse(r.body)) && !has(r.url));

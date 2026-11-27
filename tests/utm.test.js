@@ -139,3 +139,35 @@ test('before publishing there is no board link: nothing is guessed', () => {
   assert.ok(!boardish.test(email.html), 'no board link in the email HTML');
   assert.equal(issue.slug, 'dec-26-newsletter', 'sample slug follows the month-year-newsletter style');
 });
+
+test('whole EveryAction email: image, item and button links follow the rules', () => {
+  const withRecap = Object.assign({}, issue, { weekSummary: 'Lots happening this week. See you there.' });
+  const r = N350.buildEmailHtml(withRecap, all, { boardUrl: BOARD, imageUrl: 'https://example.org/uploads/board.png' });
+  assert.deepEqual(r.missing, []);
+  const tags = (content) => ({ utm_source: 'everyaction', utm_medium: 'email', utm_campaign: 'dec-26-newsletter', utm_content: content });
+  expectTagged(r.links.image, BOARD, tags('preview-image'));
+  expectTagged(r.links.button, BOARD, tags('newsletter-button'));
+  assert.deepEqual(r.links.items, N350.buildEmail(withRecap, all, BOARD).links.map((l) => ({ id: l.id, url: l.url })),
+    'the same "Read more" links as the email text');
+  // Every link in the email is one of those, and nothing else.
+  const hrefs = [...r.html.matchAll(/href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, '&'));
+  const allowed = new Set([r.links.image, r.links.button].concat(r.links.items.map((l) => l.url)));
+  assert.equal(hrefs.length, 2 + all.length);
+  hrefs.forEach((h) => assert.ok(allowed.has(h), 'unexpected link ' + h));
+  // The image is the link to the board; the button is last.
+  assert.match(r.html, /<a href="[^"]*utm_content=preview-image" target="_blank"[^>]*><img src="https:\/\/example\.org\/uploads\/board\.png"/);
+  assert.ok(r.html.lastIndexOf('newsletter-button') > r.html.lastIndexOf('Read more'));
+});
+
+test('whole EveryAction email: nothing is made up before publishing or without an image', () => {
+  const before = N350.buildEmailHtml(issue, items, { boardUrl: null, imageUrl: 'https://example.org/b.png' });
+  assert.deepEqual(before.missing, ['boardUrl']);
+  assert.equal(before.links.image, null);
+  assert.equal(before.links.button, null);
+  assert.ok(!/350seattle\.org\/(newsletter|\d{4}\/)|preview-image|newsletter-button/.test(before.html));
+  for (const bad of ['', 'http://example.org/b.png', 'javascript:alert(1)', 'data:image/png;base64,AAAA', 'https://example.org/a@b.org.png?x=jane@example.org']) {
+    const r = N350.buildEmailHtml(issue, items, { boardUrl: BOARD, imageUrl: bad });
+    assert.deepEqual(r.missing, ['imageUrl'], bad);
+    assert.ok(!/<img /.test(r.html), 'no image tag for ' + bad);
+  }
+});

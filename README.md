@@ -51,6 +51,13 @@ Do these in order:
 - **B. Download preview image.** A picture of just the news board itself, the rounded panel of tiles (1200 pixels wide), for the top of the email. It leaves out the "350 Seattle Newsletter" masthead, the date, the "News Board" heading and the "In summary…" section, which the email has in its own text. Also copy the **alt text**, and the **image link** (make the image link to it in EveryAction). The image link appears only once the board is published and public: before that, or while it's a draft, the builder shows "Publish first" instead, so the email never points at a guessed or private address.
 - **C. Copy email text.** Copies the summary (a heading per category, then each headline, its one-sentence summary and a "Read more" link) ready to paste into EveryAction. The box below the button shows exactly what will be pasted, including the full links, so you can spot-check them.
 - **D. Download HTML.** Only needed if publishing fails. In WordPress, add a **Custom HTML** block to a new post and paste in the downloaded file's contents.
+- **E. Whole email for EveryAction.** The complete email, ready to paste into EveryAction's HTML (code) editor: the "350 Seattle Newsletter" title and the issue title; the news board image, which opens the board on the website when clicked; "In summary…" with the weekly summary and, for each category, every item's headline, one-sentence summary and a **Read more** link; and a **Read the full newsletter on our website** button at the bottom. To use it:
+  1. Publish the board first (A). The image and the button link to the published post, so the email stays off until it's live.
+  2. Download the preview image (B) and upload it to EveryAction's image library (or the WordPress Media Library).
+  3. Paste the uploaded image's web address (it starts with `https://`) into the box in E.
+  4. Click **Copy email HTML** (or **Download email HTML**), and paste it into the email's HTML editor in EveryAction. **Preview the email** shows how it will look.
+
+  EveryAction adds its own footer and unsubscribe link. Every link carries tracking tags: the image `utm_content=preview-image`, the button `utm_content=newsletter-button`, and each **Read more** `utm_content=<team>-<item id>`.
 
 The links include tracking tags (`utm_...`) so EveryAction and the website can show which items people clicked. Don't remove them.
 

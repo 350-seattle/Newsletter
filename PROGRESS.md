@@ -56,7 +56,7 @@ Replaces the pasted token everywhere.
 
 ## Last known results (browser checks)
 
-All 12 PASS (10 from the brief, check 11 for the Sheet step and 350-only sign-in, check 12 for publishing as a post: no early link, draft vs live). Lighthouse a11y 100/100. 31 unit tests pass. (2026-11-25)
+All 13 PASS (10 from the brief; 11 Sheet step and 350-only sign-in; 12 publishing as a post; 13 whole EveryAction email). Lighthouse a11y 100/100. 34 unit tests pass. (2026-11-27)
 
 ## Decisions made (approved plan)
 
@@ -123,8 +123,9 @@ Wheel scrolling over the Sheet frame chains to the page when Google's Sheet does
 - [x] tests, commit
 - Note: the image tool paints its background colour onto the captured element, so the panel is wrapped in a white div and the wrapper is captured (otherwise the Foggy panel came out white). Result 1200 x 2568 px for the sample. 31 unit tests, 12/12 browser checks.
 
-### In progress: full EveryAction email HTML (requested 2026-11-27)
+### Done: full EveryAction email HTML (requested 2026-11-27)
 Builder writes a complete email per issue: masthead + issue title, the board image (links to the published board), "In summary…" + weekly summary, items by category (headline, summary, Read more), and a bottom button to the newsletter on the website.
-- [ ] render-board.js `buildEmailHtml(issue, items, {boardUrl, imageUrl, imageAlt})`: full email document, tables + inline styles, 600px, escaped, https image only; button link `utm_content=newsletter-button` (everyaction/email/<slug>); image link = preview-image rule; items = existing Read more rule
-- [ ] step 5 card "E. Email for EveryAction": image-address field (uploaded PNG's https address, saved in session), Copy email HTML, Download email HTML, sandboxed preview; disabled with a plain reason until the board is published (live) and the image address is set
-- [ ] tests: unit (structure, safety, UTM rules incl. button), e2e (live publish → image address → download → links); README; commit
+- [x] render-board.js `buildEmailHtml(issue, items, {boardUrl, imageUrl, imageAlt})`: full email document, tables + inline styles, 600px, escaped, https image only; button link `utm_content=newsletter-button` (everyaction/email/<slug>); image link = preview-image rule; items = existing Read more rule
+- [x] step 5 card "E. Email for EveryAction": image-address field (uploaded PNG's https address, saved in session), Copy email HTML, Download email HTML, sandboxed preview; disabled with a plain reason until the board is published (live) and the image address is set
+- [x] tests: unit (structure, safety, UTM rules incl. button), e2e (live publish → image address → download → links); README; commit
+- Result: 34 unit tests; 13/13 browser checks (new check 13 downloads the email and checks title, linked image, Read more count, button last). Screenshot reviewed (tests/e2e/output/everyaction-email.png).

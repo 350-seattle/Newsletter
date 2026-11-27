@@ -266,3 +266,34 @@ test('sheetLinks: private Sheet links only', () => {
     assert.equal(N350.sheetLinks(bad).reason, 'not-a-sheet', bad);
   }
 });
+
+test('whole EveryAction email: a complete, safe email document', () => {
+  const issue = N350.sanitizeIssue({ title: 'December <b>2026</b>', slug: 'dec-26-newsletter', date: '2026-12-01',
+    weekSummary: 'Big week! Write to me at volunteer@example.org.\n\nSecond paragraph.' }).issue;
+  const items = N350.sanitizeItems(hostileRaw).items;
+  const r = N350.buildEmailHtml(issue, items, { boardUrl: 'https://350seattle.org/2026/12/06/dec-26-newsletter/', imageUrl: 'https://example.org/board.png' });
+  const html = r.html;
+  assert.match(html, /^<!doctype html>\n<html lang="en">/);
+  assert.match(html, /<title>350 Seattle Newsletter: December &lt;b&gt;2026&lt;\/b&gt;<\/title>/);
+  assert.ok(!/<script/i.test(html), 'no script');
+  // Look at attribute names only: quoted values (alt text, links) are
+  // escaped text and may legitimately quote words like "onerror=".
+  const tagsOnly = (html.match(/<[a-z][^>]*>/gi) || []).map((t) => t.replace(/"[^"]*"/g, '""')).join('\n');
+  assert.ok(!/\son[a-z]+\s*=/i.test(tagsOnly), 'no on* attributes');
+  assert.ok(!/<\s*img[^>]*\salt="[^"]*[<>][^"]*"/i.test(html), 'alt text has no raw angle brackets');
+  assert.ok(!/javascript:/i.test(html), 'no javascript: URLs');
+  const emails = (html.match(/[A-Z0-9._%+'-]+@[A-Z0-9-]+(?:\.[A-Z0-9-]+)*\.[A-Z]{2,}/gi) || []).filter((e) => !/\.(png|jpe?g|gif)$/i.test(e));
+  assert.deepEqual(emails, [], 'no email addresses');
+  assert.ok(html.includes('<strong>&lt;img src=x onerror=alert(1)&gt;Headline</strong>'), 'item text is escaped');
+  const links = [...html.matchAll(/(href|src)="([^"]*)"/g)].map((m) => m[2]);
+  links.forEach((u) => assert.match(u, /^https:\/\//, u));
+  // Title, image with alt text, summary, button, email-safe layout
+  assert.match(html, /<h1[^>]*>350 Seattle<\/h1>/);
+  assert.match(html, /<img src="https:\/\/example\.org\/board\.png" width="568" alt="[^"]+"/);
+  assert.match(html, /<h2[^>]*>In summary&hellip;<\/h2>/);
+  assert.equal((html.match(/<p style="margin:0 0 14px;[^"]*">/g) || []).length, 2, 'summary paragraphs');
+  assert.match(html, />Read the full newsletter on our website<\/a>/);
+  assert.match(html, /role="presentation"/);
+  assert.match(html, /width="600"/);
+  assert.ok(!/<link\b|@import|<style>[\s\S]*url\(/i.test(html), 'no outside stylesheets or fonts');
+});
