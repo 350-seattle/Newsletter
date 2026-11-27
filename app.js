@@ -42,7 +42,8 @@
       step: 1,
       maxStep: 1,
       publishedUrl: null,
-      publishedStatus: null  // 'publish' or 'draft', from the website's reply
+      publishedStatus: null, // 'publish' or 'draft', from the website's reply
+      emailImageUrl: ''      // where the volunteer uploaded the board image (for the email)
     };
   }
 
@@ -181,6 +182,7 @@
       merged.publishedStatus = merged.publishedUrl ? (isDraft(merged.publishedUrl, s.publishedStatus) ? 'draft' : 'publish') : null;
       merged.weekSummary = typeof s.weekSummary === 'string' ? N350.sanitizeIssue({ weekSummary: s.weekSummary }).issue.weekSummary : '';
       merged.weekSummaryEdited = !!s.weekSummaryEdited;
+      merged.emailImageUrl = typeof s.emailImageUrl === 'string' && N350.isHttpsUrl(s.emailImageUrl) && !N350.containsEmail(s.emailImageUrl) ? s.emailImageUrl : '';
       return merged;
     } catch (e) {
       return null;
@@ -903,6 +905,7 @@
       : 'Publish first. The link appears here once the board is published.';
     $('#preview-alt').value = N350.previewAltText(state.issue, items);
     $('#email-text').value = email.text;
+    renderEmailCard();
   }
 
   function askToPublish() {
@@ -1141,6 +1144,80 @@
       ta.remove();
       if (ok) resolve(); else reject(new Error('copy'));
     });
+  }
+
+  // ------------------------------------------------------------------
+  // E. The whole email for EveryAction
+  // ------------------------------------------------------------------
+  function currentEmailHtml() {
+    var items = includedItems();
+    return N350.buildEmailHtml(currentIssue(), items, {
+      boardUrl: publishedLive() ? state.publishedUrl : null,
+      imageUrl: state.emailImageUrl,
+      imageAlt: N350.previewAltText(state.issue, items)
+    });
+  }
+
+  var lastPreview = null;
+  function renderEmailCard() {
+    var input = $('#email-image-url');
+    if (document.activeElement !== input) input.value = state.emailImageUrl || '';
+    var result = currentEmailHtml();
+    var wait = $('#email-html-wait');
+    var reason = '';
+    if (result.missing.indexOf('boardUrl') !== -1) {
+      reason = state.publishedUrl && state.publishedStatus === 'draft'
+        ? 'The board is only a draft on the website, so the email can\'t link to it yet. Publish it first.'
+        : 'Publish first. The email can be made once the board is published, because the image and button link to it.';
+    } else if (result.missing.indexOf('imageUrl') !== -1) {
+      reason = input.value.trim()
+        ? 'That image address doesn\'t look right. It must be a full web address starting with https://.'
+        : 'Paste the web address of the uploaded news board image above.';
+    }
+    wait.textContent = reason;
+    wait.hidden = !reason;
+    ['#email-html-copy', '#email-html-download'].forEach(function (sel) {
+      if (reason) $(sel).setAttribute('aria-disabled', 'true');
+      else $(sel).removeAttribute('aria-disabled');
+    });
+    if (result.html !== lastPreview) {
+      lastPreview = result.html;
+      $('#email-preview').setAttribute('srcdoc', result.html);
+    }
+  }
+
+  function onEmailImageInput() {
+    var value = $('#email-image-url').value.trim();
+    state.emailImageUrl = N350.isHttpsUrl(value) && !N350.containsEmail(value) ? value : '';
+    save();
+    renderEmailCard();
+  }
+
+  function emailHtmlReady(statusSel) {
+    var result = currentEmailHtml();
+    if (result.missing.length) {
+      $(statusSel).textContent = $('#email-html-wait').textContent;
+      return null;
+    }
+    return result.html;
+  }
+
+  function copyEmailHtml() {
+    var html = emailHtmlReady('#email-html-status');
+    if (!html) return;
+    copyPlain(html).then(function () {
+      $('#email-html-status').textContent = 'Copied. In EveryAction, open the email\'s HTML (code) editor, select everything in it, and paste.';
+    }).catch(function () {
+      $('#email-html-status').textContent = 'Your browser blocked copying. Use "Download email HTML" instead and open the file in a text editor.';
+    });
+  }
+
+  function downloadEmailHtml() {
+    var html = emailHtmlReady('#email-html-status');
+    if (!html) return;
+    var name = fileSlug() + '-email.html';
+    downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), name);
+    $('#email-html-status').textContent = 'Downloaded ' + name + '.';
   }
 
   function copyEmail() {
@@ -1420,6 +1497,9 @@
     $('#png-btn').addEventListener('click', makePng);
     $('#email-btn').addEventListener('click', copyEmail);
     $('#html-btn').addEventListener('click', downloadHtml);
+    $('#email-image-url').addEventListener('input', onEmailImageInput);
+    $('#email-html-copy').addEventListener('click', copyEmailHtml);
+    $('#email-html-download').addEventListener('click', downloadEmailHtml);
     $('#week-summary').addEventListener('input', onRecapInput);
     $('#week-summary').addEventListener('change', onRecapChange);
     document.addEventListener('click', onCopyField);

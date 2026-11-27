@@ -185,6 +185,24 @@
           <button type="button" class="nb-btn nb-btn--secondary" id="html-btn">Download HTML</button>
           <p class="nb-status" id="html-status" role="status"></p>
         </section>
+
+        <section class="nb-card nb-card--wide" aria-labelledby="ea-title">
+          <h2 class="nb-h2" id="ea-title"><span class="nb-letter" aria-hidden="true">E</span> Whole email for EveryAction</h2>
+          <p class="nb-help">The complete email, ready to paste into EveryAction's HTML editor: the newsletter title, the news board image (it opens the board on the website), the summary with a "Read more" link for each item, and a button to the newsletter on the website. EveryAction adds its own footer and unsubscribe link.</p>
+          <label class="nb-label" for="email-image-url">Address of the uploaded news board image</label>
+          <p class="nb-help" id="email-image-help">Upload the image from B to EveryAction's image library (or the WordPress Media Library), then paste its web address here. It starts with https://.</p>
+          <input class="nb-input" id="email-image-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" aria-describedby="email-image-help email-html-wait">
+          <p class="nb-help nb-wait" id="email-html-wait" aria-live="polite"></p>
+          <div class="nb-signin-row">
+            <button type="button" class="nb-btn" id="email-html-copy">Copy email HTML</button>
+            <button type="button" class="nb-btn nb-btn--secondary" id="email-html-download">Download email HTML</button>
+          </div>
+          <p class="nb-status" id="email-html-status" role="status"></p>
+          <details class="nb-email-preview">
+            <summary>Preview the email</summary>
+            <iframe id="email-preview" class="nb-email-frame" title="Preview of the EveryAction email" sandbox=""></iframe>
+          </details>
+        </section>
       </div>
 
       <div class="nb-actions">

@@ -522,7 +522,123 @@
     return { ok: true, id: m[1], embedUrl: base + '?rm=minimal' + tab, openUrl: base + tab };
   }
 
+  /*
+   * The whole email for EveryAction, as one HTML document to paste into
+   * its HTML editor. Email programs ignore most CSS, so it uses tables
+   * and inline styles, 600px wide, with fonts every computer has.
+   *   opts.boardUrl  the published board's address (required)
+   *   opts.imageUrl  https address of the uploaded preview image (required)
+   *   opts.imageAlt  alt text for the image (optional)
+   * Returns { html, missing, links: { image, button, items } }.
+   * missing lists what's needed first: 'boardUrl' and/or 'imageUrl'.
+   */
+  function buildEmailHtml(issue, items, opts) {
+    opts = opts || {};
+    issue = issue || {};
+    var boardUrl = isHttpUrl(opts.boardUrl) ? String(opts.boardUrl) : null;
+    var imageUrl = isHttpsUrl(opts.imageUrl) && !containsEmail(opts.imageUrl) ? String(opts.imageUrl) : null;
+    var missing = [];
+    if (!boardUrl) missing.push('boardUrl');
+    if (!imageUrl) missing.push('imageUrl');
+
+    var text = buildEmail(issue, items, boardUrl);
+    var imageLink = text.previewUrl;
+    var buttonUrl = boardUrl ? tagUrl(boardUrl, {
+      utm_source: 'everyaction',
+      utm_medium: 'email',
+      utm_campaign: issue.slug,
+      utm_content: 'newsletter-button'
+    }) : null;
+    var alt = opts.imageAlt ? String(opts.imageAlt) : previewAltText(issue, items);
+    var recap = weekSummaryOf(issue);
+    var title = issue.title || formatDate(issue.date) || '';
+
+    var FONT = 'Arial, Helvetica, sans-serif';
+    var esc = escapeHtml;
+    function para(t, style) {
+      return String(t).split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean).map(function (p) {
+        return '<p style="margin:0 0 14px;' + style + '">' + esc(p).replace(/\n/g, '<br>') + '</p>';
+      }).join('\n');
+    }
+    var body = 'font-family:' + FONT + ';font-size:16px;line-height:1.55;color:#000000;';
+    var h2 = 'margin:0 0 10px;font-family:' + FONT + ';font-size:24px;line-height:1.2;font-weight:bold;color:#000000;';
+    var h3 = 'margin:22px 0 8px;font-family:' + FONT + ';font-size:18px;line-height:1.3;font-weight:bold;color:#4254B0;';
+
+    // Items, grouped by category in board order (same as the plain email text).
+    var groups = [];
+    var byName = {};
+    boardOrder(items || []).forEach(function (item) {
+      var key = item.category || 'Updates';
+      if (!byName[key]) { byName[key] = { name: key, items: [] }; groups.push(byName[key]); }
+      byName[key].items.push(item);
+    });
+    var itemLinks = [];
+    var itemsHtml = groups.map(function (g) {
+      return '<h3 style="' + h3 + '">' + esc(g.name) + '</h3>\n' + g.items.map(function (item) {
+        var url = isHttpUrl(item.link) ? emailLink(issue, item) : null;
+        if (url) itemLinks.push({ id: item.id, url: url });
+        return '<p style="margin:0 0 16px;' + body + '"><strong>' + esc(item.headline) + '</strong><br>' +
+          esc(item.summary) +
+          (url ? '<br><a href="' + esc(url) + '" target="_blank" style="color:#0068A5;text-decoration:underline;font-weight:bold;">Read more</a>' : '') +
+          '</p>';
+      }).join('\n');
+    }).join('\n');
+
+    var image = imageUrl
+      ? '<img src="' + esc(imageUrl) + '" width="568" alt="' + esc(alt) + '" style="display:block;width:100%;max-width:568px;height:auto;border:0;outline:none;text-decoration:none;">'
+      : '<p style="margin:0;padding:40px 16px;border:2px dashed #9A9B9A;text-align:center;' + body + '">The news board image goes here once its address is added in the builder.</p>';
+    var imageBlock = imageLink && imageUrl
+      ? '<a href="' + esc(imageLink) + '" target="_blank" style="display:block;text-decoration:none;">' + image + '</a>'
+      : image;
+    var button = buttonUrl
+      ? '<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">\n' +
+        '<tr><td align="center" bgcolor="#4254B0" style="border-radius:999px;background:#4254B0;">' +
+        '<a href="' + esc(buttonUrl) + '" target="_blank" style="display:inline-block;padding:14px 28px;font-family:' + FONT +
+        ';font-size:17px;line-height:1.2;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:999px;">Read the full newsletter on our website</a>' +
+        '</td></tr>\n</table>'
+      : '';
+    // The line inbox previews show: the summary's first sentence.
+    var firstSentence = recap ? (/^[\s\S]*?[.!?](?=\s|$)/.exec(recap) || [recap])[0] : '';
+    var preheader = firstSentence || (title ? '350 Seattle newsletter, ' + title : '350 Seattle newsletter');
+
+    var html =
+      '<!doctype html>\n' +
+      '<html lang="en">\n<head>\n<meta charset="utf-8">\n' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+      '<meta name="x-apple-disable-message-reformatting">\n' +
+      '<title>' + esc('350 Seattle Newsletter' + (title ? ': ' + title : '')) + '</title>\n' +
+      '<style>\n@media only screen and (max-width: 620px) {\n  .n350e-wrap { width: 100% !important; }\n  .n350e-pad { padding-left: 16px !important; padding-right: 16px !important; }\n}\n</style>\n' +
+      '</head>\n' +
+      '<body style="margin:0;padding:0;background:#E8E6E0;">\n' +
+      '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">' + esc(preheader) + '</div>\n' +
+      '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#E8E6E0" style="background:#E8E6E0;">\n' +
+      '<tr><td align="center" style="padding:24px 8px;">\n' +
+      '<table role="presentation" class="n350e-wrap" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width:600px;max-width:600px;background:#FFFFFF;border-radius:16px;">\n' +
+      // Title
+      '<tr><td class="n350e-pad" align="center" style="padding:32px 16px 20px;border-bottom:1px solid #9A9B9A;">\n' +
+      '<h1 style="margin:0;font-family:' + FONT + ';font-size:40px;line-height:1.05;font-weight:bold;letter-spacing:-0.5px;color:#000000;">350 Seattle</h1>\n' +
+      '<p style="margin:4px 0 6px;font-family:Georgia, \'Times New Roman\', serif;font-style:italic;font-size:32px;line-height:1.1;color:#000000;">Newsletter</p>\n' +
+      (title ? '<p style="margin:0;font-family:' + FONT + ';font-size:18px;line-height:1.3;color:#000000;">' + esc(title) + '</p>\n' : '') +
+      '</td></tr>\n' +
+      // News board image, linked to the board on the website
+      '<tr><td class="n350e-pad" style="padding:24px 16px 8px;">\n' + imageBlock + '\n</td></tr>\n' +
+      // Summary and items
+      '<tr><td class="n350e-pad" style="padding:16px 24px 8px;">\n' +
+      '<h2 style="' + h2 + '">' + (recap ? 'In summary&hellip;' : 'In this issue') + '</h2>\n' +
+      (recap ? para(recap, body) + '\n' : '') +
+      itemsHtml + '\n' +
+      '</td></tr>\n' +
+      // Button to the newsletter on the website
+      (button ? '<tr><td class="n350e-pad" align="center" style="padding:16px 24px 36px;">\n' + button + '\n</td></tr>\n' : '') +
+      '</table>\n' +
+      '</td></tr>\n</table>\n' +
+      '</body>\n</html>\n';
+
+    return { html: html, missing: missing, links: { image: imageLink, button: buttonUrl, items: itemLinks } };
+  }
+
   return {
+    buildEmailHtml: buildEmailHtml,
     sheetLinks: sheetLinks,
     render: render,
     processCss: processCss,
