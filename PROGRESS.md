@@ -30,7 +30,7 @@ cd tests/e2e && npm install && node run.mjs   # browser checks 1-10
 - [x] README.md for volunteers
 - [x] Visual review: fixed category overflow in narrow tiles, centered text tiles, capped open-tile image height
 - [x] Final full run: 25/25 unit tests, 10/10 browser checks; committed and pushed
-- [ ] (Owner) Turn on GitHub Pages; set APPS_SCRIPT_URL, GOOGLE_CLIENT_ID and SHEET_URL in config.js once the Apps Script side exists (BOARD_BASE_URL was removed 2026-11-25)
+- [x] (Owner) GitHub Pages on; APPS_SCRIPT_URL, GOOGLE_CLIENT_ID and SHEET_URL set in config.js (2026-11-27)
 
 ### Done: weekly summary (requested 2026-11-16)
 The volunteer writes "everything happening this week" in the builder.
@@ -111,3 +111,8 @@ Wheel scrolling over the Sheet frame chains to the page when Google's Sheet does
 - [x] e2e check 11: wheel over the Sheet doesn't move the page; wheel elsewhere still does (write first, confirm it fails)
 - [x] app.js + app.css fix, tests pass, README note, commit
 - Result: the browser test reproduced it (page moved 301px under the Sheet); after the fix it moves 0px, the page still scrolls elsewhere, and nothing shifts sideways. 31 unit tests, 12/12 browser checks pass.
+
+### Done: Apps Script connected (2026-11-27)
+- APPS_SCRIPT_URL set. Checked from outside Google: a text/plain POST is redirected to script.googleusercontent.com, answers JSON with Access-Control-Allow-Origin: *, and refuses a fake idToken with {ok:false, error:"Please sign in again.", reauth:true}.
+- Earlier the deployment was limited (answered 401 "Page Not Found"); fixed by redeploying with Who has access: Anyone.
+- Next: a real end-to-end run (sign in, load approved blurbs, publish as draft, check on WordPress).

@@ -5,7 +5,7 @@
 window.N350_CONFIG = {
   // The Google Apps Script web app address (ends in /exec).
   // Leave blank to use the sample data only.
-  APPS_SCRIPT_URL: '',
+  APPS_SCRIPT_URL: 'https://script.google.com/a/macros/350seattle.org/s/AKfycbxTWQF4gG4LlVppotqYhiW12b4uwS5MNeuBfpNKMmpkx42igXRL6gEQY8u9zpgF-TeEwA/exec',
 
   // Sign-in with a 350 Seattle Google account. The client ID is public
   // (it is not a password). Leave blank until it's set up; see README,
