@@ -116,3 +116,8 @@ Wheel scrolling over the Sheet frame chains to the page when Google's Sheet does
 - APPS_SCRIPT_URL set. Checked from outside Google: a text/plain POST is redirected to script.googleusercontent.com, answers JSON with Access-Control-Allow-Origin: *, and refuses a fake idToken with {ok:false, error:"Please sign in again.", reauth:true}.
 - Earlier the deployment was limited (answered 401 "Page Not Found"); fixed by redeploying with Who has access: Anyone.
 - Next: a real end-to-end run (sign in, load approved blurbs, publish as draft, check on WordPress).
+
+### In progress: preview image = news board tiles only (requested 2026-11-27)
+- [ ] makePng captures only `.n350-grid` (the rounded tile panel) at 600 CSS px, 2x = 1200 px; no masthead, date, "News Board" heading or "In summary…"
+- [ ] help text + README; e2e check 6 also checks the image starts and ends inside the tile panel (Foggy background), not on the white masthead/summary
+- [ ] tests, commit
